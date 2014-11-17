@@ -15,20 +15,36 @@
             android:orientation="vertical"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
+            <TextView
+                android:text="@string/time_to_lock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/text_time_left"
+                android:gravity="center_horizontal"
+                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+                android:textAlignment="center"
+                android:textIsSelectable="false"
+                android:textSize="@dimen/time_left_unlocked_fontsize" />
 
             <TextView
                 android:text="@string/app_status"
                 android:layout_width="match_parent"
                 android:layout_height="150dp"
-                android:id="@+id/textView"
+                android:id="@+id/textStatus"
                 android:minWidth="@dimen/dialog_fixed_width_minor"
-                android:gravity="center_horizontal" />
+                android:gravity="center_horizontal"
+                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+                android:height="150px"
+                android:padding="10px"
+                android:textAlignment="center"
+                android:textIsSelectable="false"
+                android:textSize="@dimen/statusFontSize" />
         </LinearLayout>
 
         <Button
             android:layout_width="match_parent"
             android:layout_height="@dimen/abc_action_bar_default_height"
-            android:layout_below="@+id/textView"
+            android:layout_below="@+id/textStatus"
             android:text="Create secret share"
             android:id="@+id/createShareButton"/>
 
@@ -37,5 +53,12 @@
             android:layout_height="wrap_content"
             android:text="Connect to server"
             android:id="@+id/connectToServerButton"
+            android:layout_alignParentBottom="true" />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Change status"
+            android:id="@+id/tempButton"
             android:layout_alignParentBottom="true" />
     </LinearLayout>
