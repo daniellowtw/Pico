@@ -1,9 +1,8 @@
 package com.example.picoclient.testclient;
 
+import android.content.Context;
 import android.graphics.Color;
-import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,12 +11,22 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -29,15 +38,6 @@ public class MainActivity extends ActionBarActivity {
     static Timer timer = new Timer();
     static long endTime = 0;
 
-    class changeToLockTask extends TimerTask{
-
-        @Override
-        public void run() {
-
-        }
-    }
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,7 +48,6 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -73,21 +72,52 @@ public class MainActivity extends ActionBarActivity {
     /**
      * Code to initialise the fragment should be placed here. This is where we put our button click handlers
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment implements AsyncResponse<String> {
 
+        public AsyncResponse<String> thisFragment = this;
         public PlaceholderFragment() {
         }
 
-        private void lockApp(TextView textViewToChange){
-            Log.e("action", "unlock App");
+        private void saveFile(Context ctx) {
+            // Create a new file
+            try {
+                // catches IOException below
+                Log.e("action", "saving file");
+                final String TESTSTRING = new String("Hello Android");
+                FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
+                OutputStreamWriter osw = new OutputStreamWriter(fOut);
+                osw.write(TESTSTRING);
+                osw.flush();
+                osw.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+            }
+            // End create a new file
+        }
+
+        private String readFile(Context ctx) {
+            try {
+                FileInputStream fIn = ctx.openFileInput("samplefile.txt");
+                InputStreamReader isr = new InputStreamReader(fIn);
+                Scanner s = new Scanner(isr);
+                String readString = s.nextLine();
+                Log.i("File Reading stuff", "success = " + readString);
+                return readString;
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+                return "Error getting string";
+            }
+        }
+
+        private void lockApp(TextView textViewToChange) {
+            Log.i("action", "unlock App");
             unlockedState = false;
             textViewToChange.setText(R.string.app_status_locked);
             textViewToChange.setBackgroundColor(Color.RED);
         }
 
-
-        private void unlockApp(TextView textViewToChange){
-            Log.e("action", "unlock App");
+        private void unlockApp(TextView textViewToChange) {
+            Log.i("action", "unlock App");
             unlockedState = true;
             textViewToChange.setText(R.string.app_status_unlocked);
             textViewToChange.setBackgroundColor(Color.GREEN);
@@ -103,7 +133,7 @@ public class MainActivity extends ActionBarActivity {
             final Runnable timerRunnable = new Runnable() {
                 @Override
                 public void run() {
-                    long millis = endTime -  System.currentTimeMillis();
+                    long millis = endTime - System.currentTimeMillis();
                     // add 1 second more so that we lock when it shows 0.
                     long displayTime = millis + 1000;
                     int seconds = (int) (displayTime / 1000);
@@ -111,30 +141,48 @@ public class MainActivity extends ActionBarActivity {
                     seconds = seconds % 60;
                     timerText.setText(String.format("Time left before locking: %d:%02d", minutes, seconds));
                     // if there is still time left before locking
-                    if (millis > 0 ){
+                    if (millis > 0) {
                         timerHandler.postDelayed(this, 500);
                     }
                     // change to lock state and stop changing timer
-                    else{
+                    else {
+                        timerText.setText("");
                         lockApp(statusTextView);
                     }
                 }
             };
-
-            final Button createShareButton = (Button) rootView.findViewById(R.id.createShareButton);
+            final Button createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
+            final Button readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
             final Button connectToServerButton = (Button) rootView.findViewById(R.id.connectToServerButton);
-            createShareButton.setOnClickListener(new View.OnClickListener() {
+
+            lockApp(statusTextView);
+
+            createFileButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(getActivity(), "This will create a new key pair", Toast.LENGTH_SHORT).show();
-                    Log.e("ButtonPress", "Create share button pressed");
+                    saveFile(getActivity().getApplicationContext());
+                    Toast.makeText(getActivity(), "This will create a new file", Toast.LENGTH_SHORT).show();
+                    Log.i("ButtonPress", "Create share button pressed");
                 }
             });
+
+            readFileButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    String fileSecret = readFile(getActivity().getApplicationContext());
+                    Toast.makeText(getActivity(), "File content is: " + fileSecret, Toast.LENGTH_SHORT).show();
+                    Log.i("ButtonPress", "Create to server button pressed");
+                }
+            });
+
             connectToServerButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Toast.makeText(getActivity(), "This will connect to the server", Toast.LENGTH_SHORT).show();
-                    Log.e("ButtonPress", "Create to server button pressed");
+
+                    final NetworkAsyncTask asyncTask = new NetworkAsyncTask();
+                    asyncTask.delegate = thisFragment;
+                    asyncTask.execute();
+                    Log.i("ButtonPress", "Create to server button pressed");
                 }
             });
 
@@ -162,6 +210,14 @@ public class MainActivity extends ActionBarActivity {
             });
 
             return rootView;
+        }
+
+        @Override
+        public void processFinish(String output) {
+            Log.i("Async task", "delegate called");
+            Log.i("Async task", output);
+            Toast.makeText(getActivity(),output,Toast.LENGTH_SHORT).show();
+
         }
     }
 }

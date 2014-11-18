@@ -40,25 +40,20 @@
                 android:textIsSelectable="false"
                 android:textSize="@dimen/statusFontSize" />
 
-            <GridLayout
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="fill_parent">
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/abc_action_bar_default_height"
-                    android:layout_below="@+id/textStatus"
-                    android:text="Create file"
-                    android:id="@+id/createFileButton"/>
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="@dimen/abc_action_bar_default_height"
-                    android:text="Read secret share"
-                    android:id="@+id/button" />
-            </GridLayout>
         </LinearLayout>
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/abc_action_bar_default_height"
+            android:layout_below="@+id/textStatus"
+            android:text="Create file"
+            android:id="@+id/createFileButton"/>
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/abc_action_bar_default_height"
+            android:text="Read File"
+            android:id="@+id/readFileButton" />
 
         <Button
             android:layout_width="match_parent"
