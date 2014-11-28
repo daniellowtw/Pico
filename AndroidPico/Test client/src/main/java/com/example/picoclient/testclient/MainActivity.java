@@ -16,20 +16,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Handler;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.Scanner;
 import java.util.Timer;
-import java.util.TimerTask;
-
 
 public class MainActivity extends ActionBarActivity {
 
@@ -78,15 +71,21 @@ public class MainActivity extends ActionBarActivity {
         public PlaceholderFragment() {
         }
 
-        private void saveFile(Context ctx) {
+        private void saveFile(Context ctx){
             // Create a new file
             try {
                 // catches IOException below
                 Log.e("action", "saving file");
                 final String TESTSTRING = new String("Hello Android");
+
+                // Encrypt string
+                Encryptor encryptor = new Encryptor();
+                String ciphertext = encryptor.encrypt(TESTSTRING, "1234");
+
                 FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
                 OutputStreamWriter osw = new OutputStreamWriter(fOut);
-                osw.write(TESTSTRING);
+                osw.write(ciphertext);
+                Log.e("data", ciphertext);
                 osw.flush();
                 osw.close();
             } catch (IOException ioe) {
