@@ -10,12 +10,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * Created by Daniel on 18/11/2014.
  */
-public class NetworkAsyncTask extends AsyncTask<Void, Void, String>{
+public class NetworkAsyncTask extends AsyncTask<Void, Void, String> {
 
     static final String serverAddr = "dlow.me";
     static final int serverPort = 1234;
@@ -25,7 +27,9 @@ public class NetworkAsyncTask extends AsyncTask<Void, Void, String>{
     @Override
     protected String doInBackground(Void... voids) {
         try {
-            Socket ss = new Socket(serverAddr, serverPort);
+            InetSocketAddress addr = new InetSocketAddress(serverAddr, serverPort);
+            Socket ss = new Socket();
+            ss.connect(addr, 100);
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     ss.getInputStream()));
             PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -36,9 +40,12 @@ public class NetworkAsyncTask extends AsyncTask<Void, Void, String>{
             out.flush();
             String secretShareFromServer = br.readLine();
             return secretShareFromServer;
+        } catch (UnknownHostException e) {
+            Log.getStackTraceString(e);
+            return "Connection failed";
         } catch (IOException e) {
             Log.getStackTraceString(e);
-            return null;
+            return "Connection failed";
         }
     }
 

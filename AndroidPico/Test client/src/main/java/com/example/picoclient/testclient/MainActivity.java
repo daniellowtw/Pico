@@ -170,7 +170,7 @@ public class MainActivity extends ActionBarActivity {
                 public void onClick(View view) {
                     String fileSecret = readFile(getActivity().getApplicationContext());
                     Toast.makeText(getActivity(), "File content is: " + fileSecret, Toast.LENGTH_SHORT).show();
-                    Log.i("ButtonPress", "Create to server button pressed");
+                    Log.i("ButtonPress", "Read file button pressed");
                 }
             });
 
