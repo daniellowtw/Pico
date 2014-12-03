@@ -20,7 +20,9 @@ public class Encryptor {
     String decrypt(String ciphertext, byte[] keyBytes){
         return Crypto.decryptPbkdf2(ciphertext, keyBytes);
     }
-
+    String decryptWithKey(String ciphertext, SecretKey key){
+        return Crypto.decryptPbkdf2WithKey(ciphertext, key);
+    }
     String decryptWithPassword(String ciphertext, String password){
         return Crypto.decryptPbkdf2WithPassword(ciphertext, password);
     }

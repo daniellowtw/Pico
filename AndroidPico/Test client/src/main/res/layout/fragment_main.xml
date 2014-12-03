@@ -67,6 +67,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Change status"
+        android:id="@+id/changeStatusButton"
+        android:layout_alignParentBottom="true" />
+
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Decrypt secret share"
         android:id="@+id/tempButton"
         android:layout_alignParentBottom="true" />
 </LinearLayout>

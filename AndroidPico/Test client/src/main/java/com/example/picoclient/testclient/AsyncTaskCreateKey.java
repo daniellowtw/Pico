@@ -2,12 +2,13 @@ package com.example.picoclient.testclient;
 
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
@@ -15,28 +16,33 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 /**
- * Created by Daniel on 18/11/2014.
+ * Created by Daniel on 03/12/2014.
  */
-public class NetworkAsyncTask extends AsyncTask<Void, Void, String> {
-
+public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
     static final String serverAddr = "dlow.me";
     static final int serverPort = 1234;
     // will be modified when instantiated
     public AsyncResponse<String> delegate = null;
 
     @Override
-    protected String doInBackground(Void... voids) {
+    protected String doInBackground(String... s) {
         try {
             InetSocketAddress addr = new InetSocketAddress(serverAddr, serverPort);
             Socket ss = new Socket();
             ss.connect(addr, 100);
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     ss.getInputStream()));
-            PrintWriter out = new PrintWriter(new BufferedWriter(
-                    new OutputStreamWriter(ss.getOutputStream())));
+            OutputStream outputStream = ss.getOutputStream();
+            BufferedWriter bufferedWriter = new BufferedWriter(
+                    new OutputStreamWriter(ss.getOutputStream()));
+            PrintWriter out = new PrintWriter(bufferedWriter);
             // welcome message ignore
             br.readLine();
-            out.print("key]daniel");
+            String temp = "add]daniel]"+s[0];
+            Log.e("Async", s[0]);
+            out.print(temp);
+//            bufferedWriter.write("add]daniel]");
+//            outputStream.write(s.toString());
             out.flush();
             String secretShareFromServer = br.readLine();
             return secretShareFromServer;

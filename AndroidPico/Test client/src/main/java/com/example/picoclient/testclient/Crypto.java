@@ -143,6 +143,19 @@ public class Crypto {
         return decrypt(cipherBytes, key, iv);
     }
 
+    // Uses the secretKey stored on server to decrypt. This is in contrast with deriving secretKey
+    // from password
+    public static String decryptPbkdf2WithKey(String ciphertext, SecretKey key) {
+        String[] fields = ciphertext.split(DELIMITER);
+        if (fields.length != 3) {
+            throw new IllegalArgumentException("Invalid encypted text format");
+        }
+        byte[] salt = fromBase64(fields[0]);
+        byte[] iv = fromBase64(fields[1]);
+        byte[] cipherBytes = fromBase64(fields[2]);
+        return decrypt(cipherBytes, key, iv);
+    }
+
     // Allow unlocking using password which derives secretkey. Might remove in the future because
     // derived key should be stored on server.
     public static String decryptPbkdf2WithPassword(String ciphertext, String password) {

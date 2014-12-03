@@ -81,13 +81,19 @@ class Echo(protocol.Protocol):
             log.msg('key asked', temp[1])
             if (temp[1] in sharedValue):
                 # key is in db
-                sharedValue[temp[1]][1]+=1
                 self.transport.write(
                     "secret key has been asked " +
                     str(sharedValue[temp[1]][1]) + " times.\r\n")
             else:
                 # key not in db
                 self.transport.write("Revoked/Non-existent key")
+        elif data.startswith("get"):
+            # add key to db
+            # data is of form add]index]key
+            temp = data.strip().split(']')
+            # store key and statistics
+            sharedValue[temp[1]][1]+=1
+            self.transport.write(sharedValue[temp[1]][0])
         elif data.startswith("add"):
             # add key to db
             # data is of form add]index]key

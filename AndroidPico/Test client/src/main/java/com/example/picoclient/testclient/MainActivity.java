@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -21,8 +22,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Timer;
+
+import javax.crypto.SecretKey;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -80,7 +84,12 @@ public class MainActivity extends ActionBarActivity {
 
                 // Encrypt string
                 Encryptor encryptor = new Encryptor();
+                // TODO: Need to delete this from memory because it contains key
                 String ciphertext = encryptor.encrypt(TESTSTRING, "1234");
+                final AsyncTaskCreateKey asyncTaskCreateKey = new AsyncTaskCreateKey();
+                asyncTaskCreateKey.delegate = thisFragment;
+                asyncTaskCreateKey.execute(new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
+//                Log.i("action", "String key on server" + new String(encryptor.key.getEncoded()));
 
                 FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
                 OutputStreamWriter osw = new OutputStreamWriter(fOut);
@@ -153,6 +162,7 @@ public class MainActivity extends ActionBarActivity {
             final Button createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
             final Button readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
             final Button connectToServerButton = (Button) rootView.findViewById(R.id.connectToServerButton);
+            final Button changeStatusButton = (Button) rootView.findViewById(R.id.changeStatusButton);
 
             lockApp(statusTextView);
 
@@ -160,7 +170,7 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void onClick(View view) {
                     saveFile(getActivity().getApplicationContext());
-                    Toast.makeText(getActivity(), "This will create a new file", Toast.LENGTH_SHORT).show();
+                    // Toast message will be created by processFinish function
                     Log.i("ButtonPress", "Create share button pressed");
                 }
             });
@@ -177,7 +187,6 @@ public class MainActivity extends ActionBarActivity {
             connectToServerButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-
                     final NetworkAsyncTask asyncTask = new NetworkAsyncTask();
                     asyncTask.delegate = thisFragment;
                     asyncTask.execute();
@@ -185,10 +194,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
-            /*
-            ** Temp test button is a placeholder for creating new features */
-            Button tempTestButton = (Button) rootView.findViewById(R.id.tempButton);
-            tempTestButton.setOnClickListener(new View.OnClickListener() {
+            changeStatusButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     Log.e("Info state", unlockedState.toString());
@@ -208,6 +214,33 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
+            /*
+            ** Temp test button is a placeholder for creating new features */
+            Button tempTestButton = (Button) rootView.findViewById(R.id.tempButton);
+            tempTestButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey();
+                    asyncTask.delegate = new AsyncResponse<String>() {
+                        @Override
+                        public void processFinish(String output) {
+                            if (output == null) {
+                                Toast.makeText(getActivity(), "Key missing", Toast.LENGTH_SHORT).show();
+                                Log.i("Decrypt", "missing key");
+                                return;
+                            }
+                            Encryptor e = new Encryptor();
+                            String fileSecret = readFile(getActivity().getApplicationContext());
+                            String temp = e.decrypt(fileSecret, Base64.decode(output, Base64.DEFAULT));
+                            Toast.makeText(getActivity(), "File content is: " + temp, Toast.LENGTH_SHORT).show();
+                            Log.i("Decrypt", "file is " + temp);
+                        }
+                    };
+                    asyncTask.execute();
+                    Log.i("ButtonPress", "Decrypt secret share button pressed");
+                }
+            });
+
             return rootView;
         }
 
@@ -216,7 +249,6 @@ public class MainActivity extends ActionBarActivity {
             Log.i("Async task", "delegate called");
             Log.i("Async task", output);
             Toast.makeText(getActivity(),output,Toast.LENGTH_SHORT).show();
-
         }
     }
 }
