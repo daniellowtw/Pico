@@ -22,7 +22,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.DateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Scanner;
 import java.util.Timer;
 
@@ -32,8 +34,9 @@ public class MainActivity extends ActionBarActivity {
 
     /* Putting state variables here so they can be persistent throughout Activity's life */
     static protected Boolean unlockedState = false;
-    static Timer timer = new Timer();
+    static protected Boolean pollingState = false;
     static long endTime = 0;
+    static long pollEndTime = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,10 +75,11 @@ public class MainActivity extends ActionBarActivity {
     public static class PlaceholderFragment extends Fragment implements AsyncResponse<String> {
 
         public AsyncResponse<String> thisFragment = this;
+
         public PlaceholderFragment() {
         }
 
-        private void saveFile(Context ctx){
+        private void saveFile(Context ctx) {
             // Create a new file
             try {
                 // catches IOException below
@@ -159,10 +163,35 @@ public class MainActivity extends ActionBarActivity {
                     }
                 }
             };
+
             final Button createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
             final Button readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
             final Button connectToServerButton = (Button) rootView.findViewById(R.id.connectToServerButton);
             final Button changeStatusButton = (Button) rootView.findViewById(R.id.changeStatusButton);
+            final Button decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
+            final TextView lastLog = (TextView) rootView.findViewById(R.id.lastLog);
+            final Handler pollTimerHandler = new Handler();
+            final Runnable pollTimerRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    // TODO Is this an anti-pattern?
+                    if (!pollingState) return;
+                    long millis = pollEndTime - System.currentTimeMillis();
+                    if (millis > 0) {
+                        // Check every one second? Do I want this?
+                        timerHandler.postDelayed(this, 1000);
+                    }
+                    // change to lock state and stop changing timer
+                    else {
+                        String timestamp = DateFormat.getDateTimeInstance().format(new Date());
+                        Log.i("Poll", "called at " + timestamp);
+                        lastLog.append("Called at " + timestamp + "\n");
+                        pollEndTime += 4000;
+                        timerHandler.postDelayed(this, 4000);
+                    }
+                }
+            };
+
 
             lockApp(statusTextView);
 
@@ -214,10 +243,7 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
-            /*
-            ** Temp test button is a placeholder for creating new features */
-            Button tempTestButton = (Button) rootView.findViewById(R.id.tempButton);
-            tempTestButton.setOnClickListener(new View.OnClickListener() {
+            decryptFileButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey();
@@ -241,6 +267,30 @@ public class MainActivity extends ActionBarActivity {
                 }
             });
 
+            /*
+            ** Temp test button is a placeholder for creating new features */
+            final Button tempTestButton = (Button) rootView.findViewById(R.id.tempButton);
+            tempTestButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Log.i("ButtonPress", "temp button pressed");
+                    if (pollingState){
+                        pollTimerHandler.removeCallbacks(pollTimerRunnable);
+                        tempTestButton.setText("Start polling");
+                        pollingState = false;
+                    }
+                    else {
+                        tempTestButton.setText("Stop polling");
+                        pollTimerHandler.removeCallbacks(pollTimerRunnable);
+                        pollEndTime = System.currentTimeMillis() + 4000;
+                        // start the handler
+                        pollTimerHandler.postDelayed(pollTimerRunnable, 0);
+                        Log.i("Poll", "handler started");
+                        pollingState = true;
+                    }
+                }
+            });
+
             return rootView;
         }
 
@@ -248,7 +298,7 @@ public class MainActivity extends ActionBarActivity {
         public void processFinish(String output) {
             Log.i("Async task", "delegate called");
             Log.i("Async task", output);
-            Toast.makeText(getActivity(),output,Toast.LENGTH_SHORT).show();
+            Toast.makeText(getActivity(), output, Toast.LENGTH_SHORT).show();
         }
     }
 }
