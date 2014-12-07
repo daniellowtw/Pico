@@ -10,6 +10,7 @@ import android.util.Log;
 
 import java.io.UnsupportedEncodingException;
 import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 
@@ -112,26 +113,19 @@ public class Crypto {
         return Base64.decode(base64, Base64.NO_WRAP);
     }
 
-    public static String decrypt(byte[] cipherBytes, SecretKey key, byte[] iv) {
-        try {
-            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-            IvParameterSpec ivParams = new IvParameterSpec(iv);
-            cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
-            Log.d(TAG, "Cipher IV: " + toHex(cipher.getIV()));
-            byte[] plaintext = cipher.doFinal(cipherBytes);
-            String plainrStr = new String(plaintext, "UTF-8");
-
-            return plainrStr;
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+    public static String decrypt(byte[] cipherBytes, SecretKey key, byte[] iv) throws GeneralSecurityException, UnsupportedEncodingException {
+        Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+        IvParameterSpec ivParams = new IvParameterSpec(iv);
+        cipher.init(Cipher.DECRYPT_MODE, key, ivParams);
+        Log.d(TAG, "Cipher IV: " + toHex(cipher.getIV()));
+        byte[] plaintext = cipher.doFinal(cipherBytes);
+        String plainrStr = new String(plaintext, "UTF-8");
+        return plainrStr;
     }
 
     // Uses the secretKey stored on server to decrypt. This is in contrast with deriving secretKey
     // from password
-    public static String decryptPbkdf2(String ciphertext, byte[] keyBytes) {
+    public static String decryptPbkdf2(String ciphertext, byte[] keyBytes) throws GeneralSecurityException, UnsupportedEncodingException {
         String[] fields = ciphertext.split(DELIMITER);
         if (fields.length != 3) {
             throw new IllegalArgumentException("Invalid encypted text format");
@@ -145,7 +139,7 @@ public class Crypto {
 
     // Uses the secretKey stored on server to decrypt. This is in contrast with deriving secretKey
     // from password
-    public static String decryptPbkdf2WithKey(String ciphertext, SecretKey key) {
+    public static String decryptPbkdf2WithKey(String ciphertext, SecretKey key) throws GeneralSecurityException, UnsupportedEncodingException {
         String[] fields = ciphertext.split(DELIMITER);
         if (fields.length != 3) {
             throw new IllegalArgumentException("Invalid encypted text format");
@@ -158,7 +152,7 @@ public class Crypto {
 
     // Allow unlocking using password which derives secretkey. Might remove in the future because
     // derived key should be stored on server.
-    public static String decryptPbkdf2WithPassword(String ciphertext, String password) {
+    public static String decryptPbkdf2WithPassword(String ciphertext, String password) throws GeneralSecurityException, UnsupportedEncodingException {
         String[] fields = ciphertext.split(DELIMITER);
         if (fields.length != 3) {
             throw new IllegalArgumentException("Invalid encypted text format");
@@ -168,5 +162,11 @@ public class Crypto {
         byte[] cipherBytes = fromBase64(fields[2]);
         SecretKey key = deriveKeyPbkdf2(salt, password);
         return decrypt(cipherBytes, key, iv);
+    }
+
+    public static SecretKey generateRandomKey() {
+        byte[] b = new byte[KEY_LENGTH / 8];
+        random.nextBytes(b);
+        return new SecretKeySpec(b, "AES");
     }
 }

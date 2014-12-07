@@ -1,6 +1,8 @@
 package com.example.picoclient.testclient;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -23,6 +25,11 @@ public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
     static final int serverPort = 1234;
     // will be modified when instantiated
     public AsyncResponse<String> delegate = null;
+    private Context ctx;
+
+    public AsyncTaskCreateKey(Context context) {
+        ctx = context;
+    }
 
     @Override
     protected String doInBackground(String... s) {
@@ -38,7 +45,7 @@ public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
             PrintWriter out = new PrintWriter(bufferedWriter);
             // welcome message ignore
             br.readLine();
-            String temp = "add]daniel]"+s[0];
+            String temp = "add]" + Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID) + "]" + s[0];
             Log.e("Async", s[0]);
             out.print(temp);
 //            bufferedWriter.write("add]daniel]");

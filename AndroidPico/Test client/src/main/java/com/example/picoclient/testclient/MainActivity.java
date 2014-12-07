@@ -22,13 +22,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
+import java.security.GeneralSecurityException;
+import java.security.InvalidKeyException;
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.Scanner;
-import java.util.Timer;
 
-import javax.crypto.SecretKey;
+import javax.crypto.BadPaddingException;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -89,8 +90,8 @@ public class MainActivity extends ActionBarActivity {
                 // Encrypt string
                 Encryptor encryptor = new Encryptor();
                 // TODO: Need to delete this from memory because it contains key
-                String ciphertext = encryptor.encrypt(TESTSTRING, "1234");
-                final AsyncTaskCreateKey asyncTaskCreateKey = new AsyncTaskCreateKey();
+                String ciphertext = encryptor.encryptWithoutPassword(TESTSTRING);
+                final AsyncTaskCreateKey asyncTaskCreateKey = new AsyncTaskCreateKey(getActivity().getApplicationContext());
                 asyncTaskCreateKey.delegate = thisFragment;
                 asyncTaskCreateKey.execute(new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
 //                Log.i("action", "String key on server" + new String(encryptor.key.getEncoded()));
@@ -183,15 +184,27 @@ public class MainActivity extends ActionBarActivity {
                     }
                     // change to lock state and stop changing timer
                     else {
-                        String timestamp = DateFormat.getDateTimeInstance().format(new Date());
+                        final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey(getActivity().getApplicationContext());
+                        String timestamp = DateFormat.getTimeInstance().format(new Date());
+                        asyncTask.delegate = new AsyncResponse<String>() {
+                            @Override
+                            public void processFinish(String output) {
+                                String timestamp = DateFormat.getTimeInstance().format(new Date());
+                                if (output == null) {
+                                    Log.i("Poll", "Missing key");
+                                    lastLog.append("Missing key" + timestamp + "\n");
+                                    return;
+                                }
+                                lastLog.append("Success" + timestamp + "\n");
+                            }
+                        };
+                        asyncTask.execute();
                         Log.i("Poll", "called at " + timestamp);
-                        lastLog.append("Called at " + timestamp + "\n");
                         pollEndTime += 4000;
                         timerHandler.postDelayed(this, 4000);
                     }
                 }
             };
-
 
             lockApp(statusTextView);
 
@@ -216,7 +229,7 @@ public class MainActivity extends ActionBarActivity {
             connectToServerButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    final NetworkAsyncTask asyncTask = new NetworkAsyncTask();
+                    final AsyncTaskGetKeyCount asyncTask = new AsyncTaskGetKeyCount(getActivity().getApplicationContext());
                     asyncTask.delegate = thisFragment;
                     asyncTask.execute();
                     Log.i("ButtonPress", "Create to server button pressed");
@@ -246,7 +259,7 @@ public class MainActivity extends ActionBarActivity {
             decryptFileButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey();
+                    final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey(getActivity().getApplicationContext());
                     asyncTask.delegate = new AsyncResponse<String>() {
                         @Override
                         public void processFinish(String output) {
@@ -255,11 +268,34 @@ public class MainActivity extends ActionBarActivity {
                                 Log.i("Decrypt", "missing key");
                                 return;
                             }
+                            Log.i("Decrypt", "key is" + output);
+
                             Encryptor e = new Encryptor();
                             String fileSecret = readFile(getActivity().getApplicationContext());
-                            String temp = e.decrypt(fileSecret, Base64.decode(output, Base64.DEFAULT));
-                            Toast.makeText(getActivity(), "File content is: " + temp, Toast.LENGTH_SHORT).show();
-                            Log.i("Decrypt", "file is " + temp);
+                            try{
+                                String temp = e.decrypt(fileSecret, Base64.decode(output, Base64.DEFAULT));
+                                Toast.makeText(getActivity(), "File content is: " + temp, Toast.LENGTH_SHORT).show();
+                                Log.i("Decrypt", "file is " + temp);
+                            } catch (InvalidKeyException e1) {
+                                Log.i("Decrypt", "Invalid key Exception: wrong key");
+                                e1.printStackTrace();
+                            } catch (GeneralSecurityException e1) {
+                                if(e1 instanceof BadPaddingException){
+                                    Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
+                                    Toast.makeText(getActivity(), "BadPaddingException", Toast.LENGTH_SHORT).show();
+                                }
+                                else if(e1 instanceof InvalidKeyException){
+                                    Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
+                                    Toast.makeText(getActivity(), "BadPaddingException, decryption failed", Toast.LENGTH_SHORT).show();
+                                }
+                                else{
+                                    Log.i("Decrypt", "General Security Exception" + e1.getLocalizedMessage());
+                                    Toast.makeText(getActivity(), "General Security Exception", Toast.LENGTH_SHORT).show();
+                                }
+                            } catch (UnsupportedEncodingException e1) {
+                                Log.i("Decrypt", "UnsupportedEncodingException");
+                                e1.printStackTrace();
+                            }
                         }
                     };
                     asyncTask.execute();
@@ -274,12 +310,11 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void onClick(View view) {
                     Log.i("ButtonPress", "temp button pressed");
-                    if (pollingState){
+                    if (pollingState) {
                         pollTimerHandler.removeCallbacks(pollTimerRunnable);
                         tempTestButton.setText("Start polling");
                         pollingState = false;
-                    }
-                    else {
+                    } else {
                         tempTestButton.setText("Stop polling");
                         pollTimerHandler.removeCallbacks(pollTimerRunnable);
                         pollEndTime = System.currentTimeMillis() + 4000;

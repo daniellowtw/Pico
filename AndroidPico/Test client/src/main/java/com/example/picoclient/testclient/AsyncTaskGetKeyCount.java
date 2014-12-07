@@ -1,6 +1,8 @@
 package com.example.picoclient.testclient;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,12 +19,17 @@ import java.net.UnknownHostException;
 /**
  * Created by Daniel on 18/11/2014.
  */
-public class NetworkAsyncTask extends AsyncTask<Void, Void, String> {
+public class AsyncTaskGetKeyCount extends AsyncTask<Void, Void, String> {
 
     static final String serverAddr = "dlow.me";
     static final int serverPort = 1234;
     // will be modified when instantiated
     public AsyncResponse<String> delegate = null;
+    private Context ctx;
+
+    public AsyncTaskGetKeyCount(Context context) {
+        ctx = context;
+    }
 
     @Override
     protected String doInBackground(Void... voids) {
@@ -36,7 +43,7 @@ public class NetworkAsyncTask extends AsyncTask<Void, Void, String> {
                     new OutputStreamWriter(ss.getOutputStream())));
             // welcome message ignore
             br.readLine();
-            out.print("key]daniel");
+            out.print("key]" + Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID));
             out.flush();
             String secretShareFromServer = br.readLine();
             return secretShareFromServer;
