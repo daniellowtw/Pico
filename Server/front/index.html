@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Bootstrap 101 Template</title>
+    <title>Pico remote disabling</title>
 
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -25,8 +25,10 @@
 
         <form role="form" class="form-signin" onsubmit="return false">
             <h2 class="form-signin-heading">Remote disabling</h2>
+            <label for="deviceId" class="sr-only">Device ID</label>
+            <input type="text" autocomplete="off" id="deviceId" class="form-control" placeholder="Device ID" required autofocus>
             <label for="revKey" class="sr-only">revocation key</label>
-            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="Revocation key" required autofocus>
+            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="Revocation key" required>
             <button type="submit" class="btn btn-lg btn-primary btn-block" id="disableBtn" onclick="sendReq()">Disable</button>
         </form>
         <!-- <div class="row"> -->
