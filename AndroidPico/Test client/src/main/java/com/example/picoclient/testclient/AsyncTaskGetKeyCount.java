@@ -35,7 +35,7 @@ public class AsyncTaskGetKeyCount extends AsyncTask<Void, Void, String> {
     protected String doInBackground(Void... voids) {
         try {
             InetSocketAddress addr = new InetSocketAddress(serverAddr, serverPort);
-            Socket ss = new Socket();
+            Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
             ss.connect(addr, 100);
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     ss.getInputStream()));

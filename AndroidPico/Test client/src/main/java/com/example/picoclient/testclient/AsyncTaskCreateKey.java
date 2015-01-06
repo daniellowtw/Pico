@@ -22,7 +22,7 @@ import java.net.UnknownHostException;
  */
 public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
     static final String serverAddr = "dlow.me";
-    static final int serverPort = 1234;
+    static final int serverPort = 8001;
     // will be modified when instantiated
     public AsyncResponse<String> delegate = null;
     private Context ctx;
@@ -35,7 +35,7 @@ public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
     protected String doInBackground(String... s) {
         try {
             InetSocketAddress addr = new InetSocketAddress(serverAddr, serverPort);
-            Socket ss = new Socket();
+            Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
             ss.connect(addr, 100);
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     ss.getInputStream()));
@@ -48,8 +48,6 @@ public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
             String temp = "add]" + Settings.Secure.getString(ctx.getContentResolver(), Settings.Secure.ANDROID_ID) + "]" + s[0];
             Log.e("Async", s[0]);
             out.print(temp);
-//            bufferedWriter.write("add]daniel]");
-//            outputStream.write(s.toString());
             out.flush();
             String secretShareFromServer = br.readLine();
             return secretShareFromServer;
