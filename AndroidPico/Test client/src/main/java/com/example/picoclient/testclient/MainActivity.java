@@ -1,7 +1,9 @@
 package com.example.picoclient.testclient;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
@@ -32,7 +34,6 @@ import java.util.Scanner;
 import javax.crypto.BadPaddingException;
 
 public class MainActivity extends ActionBarActivity {
-
     /* Putting state variables here so they can be persistent throughout Activity's life */
     static protected Boolean unlockedState = false;
     static protected Boolean pollingState = false;
@@ -272,7 +273,7 @@ public class MainActivity extends ActionBarActivity {
 
                             Encryptor e = new Encryptor();
                             String fileSecret = readFile(getActivity().getApplicationContext());
-                            try{
+                            try {
                                 String temp = e.decrypt(fileSecret, Base64.decode(output, Base64.DEFAULT));
                                 Toast.makeText(getActivity(), "File content is: " + temp, Toast.LENGTH_SHORT).show();
                                 Log.i("Decrypt", "file is " + temp);
@@ -280,15 +281,13 @@ public class MainActivity extends ActionBarActivity {
                                 Log.i("Decrypt", "Invalid key Exception: wrong key");
                                 e1.printStackTrace();
                             } catch (GeneralSecurityException e1) {
-                                if(e1 instanceof BadPaddingException){
+                                if (e1 instanceof BadPaddingException) {
                                     Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
                                     Toast.makeText(getActivity(), "BadPaddingException", Toast.LENGTH_SHORT).show();
-                                }
-                                else if(e1 instanceof InvalidKeyException){
+                                } else if (e1 instanceof InvalidKeyException) {
                                     Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
                                     Toast.makeText(getActivity(), "BadPaddingException, decryption failed", Toast.LENGTH_SHORT).show();
-                                }
-                                else{
+                                } else {
                                     Log.i("Decrypt", "General Security Exception" + e1.getLocalizedMessage());
                                     Toast.makeText(getActivity(), "General Security Exception", Toast.LENGTH_SHORT).show();
                                 }
@@ -310,22 +309,27 @@ public class MainActivity extends ActionBarActivity {
                 @Override
                 public void onClick(View view) {
                     Log.i("ButtonPress", "temp button pressed");
+
+                    Intent intent = new Intent(getActivity().getApplicationContext(), PollIntentService.class);
+                    intent.putExtra(PollIntentService.ACTION, PollIntentService.START_POLLING);
+                    intent.putExtra(PollIntentService.UID, Settings.Secure.getString(
+                            getActivity().getApplicationContext().getContentResolver(),
+                            Settings.Secure.ANDROID_ID));
+                    getActivity().getApplicationContext().startService(intent);
+
+                    // Change text
                     if (pollingState) {
-                        pollTimerHandler.removeCallbacks(pollTimerRunnable);
                         tempTestButton.setText("Start polling");
                         pollingState = false;
                     } else {
                         tempTestButton.setText("Stop polling");
-                        pollTimerHandler.removeCallbacks(pollTimerRunnable);
-                        pollEndTime = System.currentTimeMillis() + 4000;
-                        // start the handler
-                        pollTimerHandler.postDelayed(pollTimerRunnable, 0);
-                        Log.i("Poll", "handler started");
                         pollingState = true;
                     }
                 }
             });
 
+            TextView tv = (TextView) rootView.findViewById(R.id.versionTextView);
+            tv.setText(BuildConfig.VERSION_NAME);
             return rootView;
         }
 
