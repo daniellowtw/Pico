@@ -8,5 +8,6 @@
     <string name="app_status_locked">Locked</string>
     <string name="app_status_unlocked">Unlocked</string>
     <string name="time_to_lock">Time left unlocked</string>
+    <string name="notification_id">Notification id</string>
 
 </resources>
