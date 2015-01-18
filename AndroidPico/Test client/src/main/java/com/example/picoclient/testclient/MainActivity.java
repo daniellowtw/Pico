@@ -61,23 +61,18 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_settings) {
+            Intent i = new Intent(this, SettingsActivity.class);
+            startActivity(i);
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * Code to initialise the fragment should be placed here. This is where we put our button click handlers
-     */
     public static class PlaceholderFragment extends Fragment implements AsyncResponse<String> {
 
         public AsyncResponse<String> thisFragment = this;
-
         public PlaceholderFragment() {
         }
 
@@ -263,6 +258,7 @@ public class MainActivity extends ActionBarActivity {
                     final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey(getActivity().getApplicationContext());
                     asyncTask.delegate = new AsyncResponse<String>() {
                         @Override
+                        // TODO: Need to handle connection failed
                         public void processFinish(String output) {
                             if (output == null) {
                                 Toast.makeText(getActivity(), "Key missing", Toast.LENGTH_SHORT).show();
@@ -279,6 +275,7 @@ public class MainActivity extends ActionBarActivity {
                                 Log.i("Decrypt", "file is " + temp);
                             } catch (InvalidKeyException e1) {
                                 Log.i("Decrypt", "Invalid key Exception: wrong key");
+                                Toast.makeText(getActivity(), "Wrong key: " + output, Toast.LENGTH_SHORT).show();
                                 e1.printStackTrace();
                             } catch (GeneralSecurityException e1) {
                                 if (e1 instanceof BadPaddingException) {

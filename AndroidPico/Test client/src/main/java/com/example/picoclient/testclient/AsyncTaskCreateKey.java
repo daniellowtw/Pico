@@ -1,7 +1,9 @@
 package com.example.picoclient.testclient;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -21,14 +23,18 @@ import java.net.UnknownHostException;
  * Created by Daniel on 03/12/2014.
  */
 public class AsyncTaskCreateKey extends AsyncTask<String, Void, String> {
-    static final String serverAddr = "dlow.me";
-    static final int serverPort = 8001;
+    private String serverAddr;
+    private int serverPort;
+    SharedPreferences appPref;
     // will be modified when instantiated
     public AsyncResponse<String> delegate = null;
     private Context ctx;
 
     public AsyncTaskCreateKey(Context context) {
+        appPref = PreferenceManager.getDefaultSharedPreferences(context);
         ctx = context;
+        serverAddr = appPref.getString("pref_sync_addr","null");
+        serverPort = Integer.parseInt(appPref.getString("pref_sync_port", "0"));
     }
 
     @Override
