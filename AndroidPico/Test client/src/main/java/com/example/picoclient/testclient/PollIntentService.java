@@ -3,8 +3,10 @@ package com.example.picoclient.testclient;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -16,9 +18,13 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class PollIntentService extends IntentService {
-    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
+    private final String TAG = this.getClass().getSimpleName();
     public static final String ACTION = "ACTION";
     public static final String START_POLLING = "START_POLLING";
+    // To determine how many times key has been asked
+    public static final String GET_COUNT = "GET_COUNT";
+    //
+    public static final String DECRYPT_KEY = "GET_COUNT";
     public static final String UID = "UID";
     int counter = 0;
     NotificationManager nm;
@@ -28,34 +34,65 @@ public class PollIntentService extends IntentService {
         super("PollIntentService");
     }
 
+    public static void startPolling(Context context, String uid) {
+        Log.i("PollIntentSerive","start polling called");
+        Intent intent = new Intent(context, PollIntentService.class);
+        intent.setAction(START_POLLING);
+        intent.putExtra(UID, uid);
+        context.startService(intent);
+    }
+    public static void getKeyCount(Context context, String uid) {
+        Log.i("PollIntentSerive","start polling called");
+        Intent intent = new Intent(context, PollIntentService.class);
+        intent.setAction(GET_COUNT);
+        intent.putExtra(UID, uid);
+        context.startService(intent);
+    }
+
+
     @Override
     public void onCreate() {
         super.onCreate();
         nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Log.i("PollIntentService", "onCreate called");
+        Log.i(TAG, "onCreate called");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("PollIntentService", "onDestroy called");
+        Log.i(TAG, "onDestroy called");
     }
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.i("PollIntentService", "Handling intent");
-        Log.i("PollIntentService", "Action is " + intent.getStringExtra(ACTION));
-        Log.i("PollIntentService", "UID is " + intent.getStringExtra(UID));
-
-        if (intent.getStringExtra(ACTION).equals(START_POLLING)) {
-            final String uid = intent.getStringExtra(UID);
-            handleActionPollServer(uid);
+        Log.i(TAG, "intent received");
+        if (intent != null) {
+            final String action = intent.getAction();
+            Log.i(TAG, "intent action is " + action);
+            if (START_POLLING.equals(action)) {
+                final String uid = intent.getStringExtra(UID);
+                handleActionPollServer(uid);
+            }
+            else if (GET_COUNT.equals(action)) {
+                final String uid = intent.getStringExtra(UID);
+                handleGetKeyCount(uid);
+            }
         }
     }
 
-    private void handleActionPollServer(String param1) {
-        Log.i("PollIntentService", "Polling server for id " + param1);
+    private void handleGetKeyCount(String uid) {
+        String messageToSend = "key]" + uid;
+        String result = sendStringToServer(messageToSend);
+        Log.i(TAG, "KeyCount " + result);
+        showNotification("KeyCount", result, true);
+        Intent localIntent =
+                new Intent(MainActivity.GET_KEY_COUNT).putExtra("Count", result);
+        // Broadcasts the Intent to receivers in this app.
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        Log.i(TAG, "Sending the local broadcast");
+    }
 
+    private String sendStringToServer(String s){
         try {
             InetSocketAddress addr = new InetSocketAddress(PicoConfig.serverAddr, PicoConfig.SSL_serverPort);
             Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
@@ -64,18 +101,29 @@ public class PollIntentService extends IntentService {
             PrintWriter out = new PrintWriter(ss.getOutputStream());
             // welcome message ignore
             br.readLine();
-            out.print("get]" + param1);
+            out.print(s);
             out.flush();
-            String secretShareFromServer = br.readLine();
-            Log.i("PollIntentService", "secret received is " + secretShareFromServer);
-            showNotification("Secret", secretShareFromServer, true);
+            String res = br.readLine();
+            Log.i(TAG, "received string is " + res);
+            return res;
         } catch (UnknownHostException e) {
-            showNotification("Error", e.getLocalizedMessage(), false);
             Log.getStackTraceString(e);
         } catch (IOException e) {
-            showNotification("Error", e.getLocalizedMessage(), false);
             Log.getStackTraceString(e);
         }
+        return null;
+    }
+
+    private void handleActionPollServer(String uid) {
+        Log.i(TAG, "Polling server for id " + uid);
+        String messageToSend = "get]" + uid;
+        String result = sendStringToServer(messageToSend);
+        Log.i(TAG, "secret received is " + result);
+        showNotification("Secret", result, true);
+        Intent localIntent =
+                new Intent(MainActivity.UNLOCK_APP);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        Log.i(TAG, "Sending the local broadcast");
     }
 
     private void showNotification(String title, String text, boolean stacked) {
