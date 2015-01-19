@@ -3,7 +3,7 @@ package com.example.picoclient.testclient;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
+import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.util.Base64;
 import android.util.Log;
@@ -26,10 +26,9 @@ import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
 
-public class MainFragment extends Fragment implements AsyncResponse<String> {
+public class MainFragment extends Fragment{
     static protected Boolean unlockedState = false;
     static protected Boolean isPolling = false;
-    public AsyncResponse<String> thisFragment = this;
     private PollingBroadcastReceiver pollingBroadcastReceiver;
     Button createFileButton = null;
     Button readFileButton = null;
@@ -38,52 +37,39 @@ public class MainFragment extends Fragment implements AsyncResponse<String> {
     Button decryptFileButton = null;
     TextView lastLog = null;
     TextView statusTextView;
+    private String uid;
 
     public MainFragment() {
     }
 
-    void decryptFile(Context ctx1) {
+    // This will be called by MainActivity Receiver when the decrypt file intent is sent by the service
+    void decryptFile(Context ctx1, String key) {
         final Context ctx = ctx1;
-        final AsyncTaskRetrieveKey asyncTask = new AsyncTaskRetrieveKey(getActivity().getApplicationContext());
-        asyncTask.delegate = new AsyncResponse<String>() {
-            @Override
-            // TODO: Need to handle connection failed
-            public void processFinish(String output) {
-                if (output == null) {
-                    Toast.makeText(getActivity().getApplicationContext(), "Key missing", Toast.LENGTH_SHORT).show();
-                    Log.i("Decrypt", "missing key");
-                    return;
-                }
-                Log.i("Decrypt", "key is" + output);
-
-                Encryptor e = new Encryptor();
-                String fileSecret = readFile(ctx.getApplicationContext());
-                try {
-                    String temp = e.decrypt(fileSecret, Base64.decode(output, Base64.DEFAULT));
-                    Toast.makeText(ctx, "File content is: " + temp, Toast.LENGTH_SHORT).show();
-                    Log.i("Decrypt", "file is " + temp);
-                } catch (InvalidKeyException e1) {
-                    Log.i("Decrypt", "Invalid key Exception: wrong key");
-                    Toast.makeText(ctx, "Wrong key: " + output, Toast.LENGTH_SHORT).show();
-                    e1.printStackTrace();
-                } catch (GeneralSecurityException e1) {
-                    if (e1 instanceof BadPaddingException) {
-                        Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
-                        Toast.makeText(ctx, "BadPaddingException", Toast.LENGTH_SHORT).show();
-                    } else if (e1 instanceof InvalidKeyException) {
-                        Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
-                        Toast.makeText(ctx, "BadPaddingException, decryption failed", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Log.i("Decrypt", "General Security Exception" + e1.getLocalizedMessage());
-                        Toast.makeText(ctx, "General Security Exception", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (UnsupportedEncodingException e1) {
-                    Log.i("Decrypt", "UnsupportedEncodingException");
-                    e1.printStackTrace();
-                }
+        Encryptor e = new Encryptor();
+        String fileSecret = readFile(ctx.getApplicationContext());
+        try {
+            String temp = e.decrypt(fileSecret, Base64.decode(key, Base64.DEFAULT));
+            Toast.makeText(ctx, "File content is: " + temp, Toast.LENGTH_SHORT).show();
+            Log.i("Decrypt", "file is " + temp);
+        } catch (InvalidKeyException e1) {
+            Log.i("Decrypt", "Invalid key Exception: wrong key");
+            Toast.makeText(ctx, "Wrong key: " + key, Toast.LENGTH_SHORT).show();
+            e1.printStackTrace();
+        } catch (GeneralSecurityException e1) {
+            if (e1 instanceof BadPaddingException) {
+                Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
+                Toast.makeText(ctx, "BadPaddingException", Toast.LENGTH_SHORT).show();
+            } else if (e1 instanceof InvalidKeyException) {
+                Log.i("Decrypt", "BadPaddingException" + e1.getLocalizedMessage());
+                Toast.makeText(ctx, "BadPaddingException, decryption failed", Toast.LENGTH_SHORT).show();
+            } else {
+                Log.i("Decrypt", "General Security Exception" + e1.getLocalizedMessage());
+                Toast.makeText(ctx, "General Security Exception", Toast.LENGTH_SHORT).show();
             }
-        };
-        asyncTask.execute();
+        } catch (UnsupportedEncodingException e1) {
+            Log.i("Decrypt", "UnsupportedEncodingException");
+            e1.printStackTrace();
+        }
         Log.i("ButtonPress", "Decrypt secret share button pressed");
     }
 
@@ -107,16 +93,11 @@ public class MainFragment extends Fragment implements AsyncResponse<String> {
             // catches IOException below
             Log.e("action", "saving file");
             final String TESTSTRING = new String("Hello Android");
-
             // Encrypt string
             Encryptor encryptor = new Encryptor();
             // TODO: Need to delete this from memory because it contains key
             String ciphertext = encryptor.encryptWithoutPassword(TESTSTRING);
-            final AsyncTaskCreateKey asyncTaskCreateKey = new AsyncTaskCreateKey(getActivity().getApplicationContext());
-            asyncTaskCreateKey.delegate = thisFragment;
-            asyncTaskCreateKey.execute(new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
-//                Log.i("action", "String key on server" + new String(encryptor.key.getEncoded()));
-
+            PollIntentService.saveKey(getActivity().getApplicationContext(), uid, new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
             FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             osw.write(ciphertext);
@@ -178,12 +159,10 @@ public class MainFragment extends Fragment implements AsyncResponse<String> {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         pollingBroadcastReceiver = new PollingBroadcastReceiver();
+        uid = Settings.Secure.getString(getActivity().getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
-        final TextView timerText = (TextView) rootView.findViewById(R.id.text_time_left);
-        final Handler timerHandler = new Handler();
-
-
         createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
         readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
         connectToServerButton = (Button) rootView.findViewById(R.id.connectToServerButton);
@@ -194,12 +173,5 @@ public class MainFragment extends Fragment implements AsyncResponse<String> {
         TextView tv = (TextView) rootView.findViewById(R.id.versionTextView);
         tv.setText(BuildConfig.VERSION_NAME);
         return rootView;
-    }
-
-    @Override
-    public void processFinish(String output) {
-        Log.i("Async task", "delegate called");
-        Log.i("Async task", output);
-        Toast.makeText(getActivity(), output, Toast.LENGTH_SHORT).show();
     }
 }

@@ -17,8 +17,12 @@ import android.widget.Toast;
 public class MainActivity extends ActionBarActivity {
     /* Putting state variables here so they can be persistent throughout Activity's life */
     MainFragment mainFragment;
-    public static final String UNLOCK_APP = "test_intent_filter";
-    public static final String GET_KEY_COUNT = "GET_KEY_COUNT";
+
+    // Actions this activity can do. To be used by intent service
+    public static final String UNLOCK_APP = "UNLOCK_APP";
+    public static final String DECRYPT_FILE = "DECRYPT_FILE";
+    public static final String NOTIFY_USER = "NOTIFY_USER";
+    public static final String NOTIFY_USER_MESSAGE = "NOTIFY_USER_MESSAGE";
     private String uid;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +37,8 @@ public class MainActivity extends ActionBarActivity {
         uid = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         ResponseReceiver responseReceiver = new ResponseReceiver();
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(UNLOCK_APP));
-        LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(GET_KEY_COUNT));
+        LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(DECRYPT_FILE));
+        LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(NOTIFY_USER));
     }
 
     @Override
@@ -74,7 +79,8 @@ public class MainActivity extends ActionBarActivity {
         mainFragment.readFile(getApplicationContext());
     }
     public void onDecrypt(View v){
-        mainFragment.decryptFile(getApplicationContext());
+        PollIntentService.getDecryptKey(getApplicationContext(), uid);
+        Log.i("ButtonPress", "Asking for Decryption key");
     }
 
     private class ResponseReceiver extends BroadcastReceiver
@@ -86,9 +92,20 @@ public class MainActivity extends ActionBarActivity {
                     mainFragment.unlockApp();
                     Log.i(this.getClass().getSimpleName(), "unlocking app on intent");
                 }
-                else if (GET_KEY_COUNT.equals(intent.getAction())){
-                    Toast.makeText(getApplicationContext(),intent.getStringExtra("Count"), Toast.LENGTH_SHORT).show();
-                    Log.i(this.getClass().getSimpleName(), "Count is " + intent.getStringExtra("Count"));
+                else if (DECRYPT_FILE.equals(intent.getAction())){
+                    String key = intent.getStringExtra("decryptionKey");
+                    Log.i(this.getClass().getSimpleName(), "Key is " + key);
+                    if (key == null){
+                        Toast.makeText(getApplicationContext(), R.string.missing_key, Toast.LENGTH_SHORT).show();
+                    }
+                    else {
+                        mainFragment.decryptFile(getApplicationContext(), key);
+                    }
+                }
+                else if (NOTIFY_USER.equals(intent.getAction())){
+                    String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);
+                    Log.i(this.getClass().getSimpleName(), "Message to user is " + message);
+                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
                 }
             }
         }

@@ -5,7 +5,6 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.widget.Toast;
@@ -13,14 +12,9 @@ import android.widget.Toast;
 public class PollingBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "");
-        wl.acquire();
-        // Put here YOUR code.
         PollIntentService.startPolling(context, Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID));
         Log.i("Polling", "Polling activated");
         Toast.makeText(context, "Polling!", Toast.LENGTH_LONG).show(); // For example
-        wl.release();
     }
 
     public void SetAlarm(Context context)

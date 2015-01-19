@@ -18,14 +18,14 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 
 public class PollIntentService extends IntentService {
-    private final String TAG = this.getClass().getSimpleName();
-    public static final String ACTION = "ACTION";
+    // The following are possible actions
     public static final String START_POLLING = "START_POLLING";
-    // To determine how many times key has been asked
     public static final String GET_COUNT = "GET_COUNT";
-    //
-    public static final String DECRYPT_KEY = "GET_COUNT";
+    public static final String GET_DECRYPTION_KEY = "GET_DECRYPTION_KEY";
+    public static final String SET_DECRYPTION_KEY = "SET_DECRYPTION_KEY";
     public static final String UID = "UID";
+    public static final String KEY = "KEY";
+    private final String TAG = this.getClass().getSimpleName();
     int counter = 0;
     NotificationManager nm;
     private int NotificationID = R.string.notification_id;
@@ -35,20 +35,33 @@ public class PollIntentService extends IntentService {
     }
 
     public static void startPolling(Context context, String uid) {
-        Log.i("PollIntentSerive","start polling called");
         Intent intent = new Intent(context, PollIntentService.class);
         intent.setAction(START_POLLING);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
+
     public static void getKeyCount(Context context, String uid) {
-        Log.i("PollIntentSerive","start polling called");
         Intent intent = new Intent(context, PollIntentService.class);
         intent.setAction(GET_COUNT);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
 
+    public static void getDecryptKey(Context context, String uid) {
+        Intent intent = new Intent(context, PollIntentService.class);
+        intent.setAction(GET_DECRYPTION_KEY);
+        intent.putExtra(UID, uid);
+        context.startService(intent);
+    }
+
+    public static void saveKey(Context context, String uid, String key) {
+        Intent intent = new Intent(context, PollIntentService.class);
+        intent.setAction(SET_DECRYPTION_KEY);
+        intent.putExtra(UID, uid);
+        intent.putExtra(KEY, key);
+        context.startService(intent);
+    }
 
     @Override
     public void onCreate() {
@@ -72,27 +85,56 @@ public class PollIntentService extends IntentService {
             if (START_POLLING.equals(action)) {
                 final String uid = intent.getStringExtra(UID);
                 handleActionPollServer(uid);
-            }
-            else if (GET_COUNT.equals(action)) {
+            } else if (GET_COUNT.equals(action)) {
                 final String uid = intent.getStringExtra(UID);
                 handleGetKeyCount(uid);
+            } else if (GET_DECRYPTION_KEY.equals(action)) {
+                final String uid = intent.getStringExtra(UID);
+                handleGetDecryptionKey(uid);
+            } else if (SET_DECRYPTION_KEY.equals(action)) {
+                final String uid = intent.getStringExtra(UID);
+                final String key = intent.getStringExtra(KEY);
+                handleSetDecryptionKey(uid, key);
             }
         }
+    }
+
+    private void handleGetDecryptionKey(String uid) {
+        String messageToSend = "get]" + uid;
+        String result = sendStringToServer(messageToSend);
+        Intent localIntent =
+                new Intent(MainActivity.DECRYPT_FILE).putExtra("decryptionKey", result);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+
     }
 
     private void handleGetKeyCount(String uid) {
         String messageToSend = "key]" + uid;
         String result = sendStringToServer(messageToSend);
-        Log.i(TAG, "KeyCount " + result);
         showNotification("KeyCount", result, true);
         Intent localIntent =
-                new Intent(MainActivity.GET_KEY_COUNT).putExtra("Count", result);
-        // Broadcasts the Intent to receivers in this app.
+                new Intent(MainActivity.NOTIFY_USER).putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-        Log.i(TAG, "Sending the local broadcast");
     }
 
-    private String sendStringToServer(String s){
+    private void handleSetDecryptionKey(String uid, String key) {
+        String messageToSend = "add]" + uid + "]" + key;
+        String result = sendStringToServer(messageToSend);
+        Intent localIntent =
+                new Intent(MainActivity.NOTIFY_USER).putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+    }
+
+    private void handleActionPollServer(String uid) {
+        String messageToSend = "get]" + uid;
+        String result = sendStringToServer(messageToSend);
+        Intent localIntent =
+                new Intent(MainActivity.UNLOCK_APP);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+    }
+
+    // The following are helper functions
+    private String sendStringToServer(String s) {
         try {
             InetSocketAddress addr = new InetSocketAddress(PicoConfig.serverAddr, PicoConfig.SSL_serverPort);
             Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
@@ -112,18 +154,6 @@ public class PollIntentService extends IntentService {
             Log.getStackTraceString(e);
         }
         return null;
-    }
-
-    private void handleActionPollServer(String uid) {
-        Log.i(TAG, "Polling server for id " + uid);
-        String messageToSend = "get]" + uid;
-        String result = sendStringToServer(messageToSend);
-        Log.i(TAG, "secret received is " + result);
-        showNotification("Secret", result, true);
-        Intent localIntent =
-                new Intent(MainActivity.UNLOCK_APP);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-        Log.i(TAG, "Sending the local broadcast");
     }
 
     private void showNotification(String title, String text, boolean stacked) {
