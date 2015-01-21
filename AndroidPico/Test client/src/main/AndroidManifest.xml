@@ -22,11 +22,11 @@
             android:label="@string/app_name"></activity>
 
         <service
-            android:name="com.example.picoclient.testclient.PollIntentService"
+            android:name=".ServerAPIIntentService"
             android:exported="false"></service>
         <receiver
             android:process=":remote"
-            android:name=".PollingBroadcastReceiver" />
+            android:name=".AlarmBroadcastReceiver" />
     </application>
 
 </manifest>

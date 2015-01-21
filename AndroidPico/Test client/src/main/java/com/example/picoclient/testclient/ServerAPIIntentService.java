@@ -17,9 +17,10 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class PollIntentService extends IntentService {
+public class ServerAPIIntentService extends IntentService {
     // The following are possible actions
     public static final String START_POLLING = "START_POLLING";
+    public static final String LOCK_APP = "LOCK_APP";
     public static final String GET_COUNT = "GET_COUNT";
     public static final String GET_DECRYPTION_KEY = "GET_DECRYPTION_KEY";
     public static final String SET_DECRYPTION_KEY = "SET_DECRYPTION_KEY";
@@ -30,33 +31,39 @@ public class PollIntentService extends IntentService {
     NotificationManager nm;
     private int NotificationID = R.string.notification_id;
 
-    public PollIntentService() {
+    public ServerAPIIntentService() {
         super("PollIntentService");
     }
 
+    public static void lockApp(Context context) {
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
+        intent.setAction(LOCK_APP);
+        context.startService(intent);
+    }
+
     public static void startPolling(Context context, String uid) {
-        Intent intent = new Intent(context, PollIntentService.class);
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(START_POLLING);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
 
     public static void getKeyCount(Context context, String uid) {
-        Intent intent = new Intent(context, PollIntentService.class);
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(GET_COUNT);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
 
     public static void getDecryptKey(Context context, String uid) {
-        Intent intent = new Intent(context, PollIntentService.class);
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(GET_DECRYPTION_KEY);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
 
     public static void saveKey(Context context, String uid, String key) {
-        Intent intent = new Intent(context, PollIntentService.class);
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(SET_DECRYPTION_KEY);
         intent.putExtra(UID, uid);
         intent.putExtra(KEY, key);
@@ -82,24 +89,38 @@ public class PollIntentService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             Log.i(TAG, "intent action is " + action);
-            if (START_POLLING.equals(action)) {
-                final String uid = intent.getStringExtra(UID);
-                handleActionPollServer(uid);
-            } else if (GET_COUNT.equals(action)) {
-                final String uid = intent.getStringExtra(UID);
-                handleGetKeyCount(uid);
-            } else if (GET_DECRYPTION_KEY.equals(action)) {
-                final String uid = intent.getStringExtra(UID);
-                handleGetDecryptionKey(uid);
-            } else if (SET_DECRYPTION_KEY.equals(action)) {
-                final String uid = intent.getStringExtra(UID);
-                final String key = intent.getStringExtra(KEY);
-                handleSetDecryptionKey(uid, key);
+            try {
+
+                if (START_POLLING.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    handleActionPollServer(uid);
+                } else if (GET_COUNT.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    handleGetKeyCount(uid);
+                } else if (GET_DECRYPTION_KEY.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    handleGetDecryptionKey(uid);
+                } else if (SET_DECRYPTION_KEY.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    final String key = intent.getStringExtra(KEY);
+                    handleSetDecryptionKey(uid, key);
+                } else if (LOCK_APP.equals(action)) {
+                    handleLockApp();
+                }
+            } catch (IOException e) {
+                showNotification("Error", e.getLocalizedMessage(), false);
+                Log.e(TAG, e.getLocalizedMessage());
             }
         }
     }
 
-    private void handleGetDecryptionKey(String uid) {
+    private void handleLockApp() {
+        Intent localIntent =
+                new Intent(MainActivity.LOCK_APP);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+    }
+
+    private void handleGetDecryptionKey(String uid) throws IOException {
         String messageToSend = "get]" + uid;
         String result = sendStringToServer(messageToSend);
         Intent localIntent =
@@ -108,7 +129,7 @@ public class PollIntentService extends IntentService {
 
     }
 
-    private void handleGetKeyCount(String uid) {
+    private void handleGetKeyCount(String uid) throws IOException {
         String messageToSend = "key]" + uid;
         String result = sendStringToServer(messageToSend);
         showNotification("KeyCount", result, true);
@@ -117,24 +138,33 @@ public class PollIntentService extends IntentService {
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
 
-    private void handleSetDecryptionKey(String uid, String key) {
+    private void handleSetDecryptionKey(String uid, String key) throws IOException {
         String messageToSend = "add]" + uid + "]" + key;
         String result = sendStringToServer(messageToSend);
-        Intent localIntent =
-                new Intent(MainActivity.NOTIFY_USER).putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        if (result.isEmpty()) {
+            Log.i("empty", "empty");
+        } else {
+            Intent localIntent =
+                    new Intent(MainActivity.NOTIFY_USER)
+                            .putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        }
     }
 
-    private void handleActionPollServer(String uid) {
+    private void handleActionPollServer(String uid) throws IOException {
         String messageToSend = "get]" + uid;
         String result = sendStringToServer(messageToSend);
-        Intent localIntent =
-                new Intent(MainActivity.UNLOCK_APP);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        if (result.isEmpty()) {
+            showNotification("Error: revoked/missing key", "Key is not found on server", false);
+        } else {
+            Intent localIntent = new Intent(MainActivity.UNLOCK_APP);
+            localIntent.putExtra("Secret", result);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        }
     }
 
     // The following are helper functions
-    private String sendStringToServer(String s) {
+    private String sendStringToServer(String s) throws IOException {
         try {
             InetSocketAddress addr = new InetSocketAddress(PicoConfig.serverAddr, PicoConfig.SSL_serverPort);
             Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
@@ -149,11 +179,11 @@ public class PollIntentService extends IntentService {
             Log.i(TAG, "received string is " + res);
             return res;
         } catch (UnknownHostException e) {
-            Log.getStackTraceString(e);
+            throw e;
         } catch (IOException e) {
-            Log.getStackTraceString(e);
+            Log.e("Exception", e.getLocalizedMessage());
+            throw e;
         }
-        return null;
     }
 
     private void showNotification(String title, String text, boolean stacked) {

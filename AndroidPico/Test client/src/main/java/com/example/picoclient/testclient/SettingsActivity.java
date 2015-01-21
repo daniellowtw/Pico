@@ -68,6 +68,7 @@ public class SettingsActivity extends PreferenceActivity {
             bindPreferenceSummaryToValue(findPreference("pref_sync_addr"));
             bindPreferenceSummaryToValue(findPreference("pref_interval"));
             bindPreferenceSummaryToValue(findPreference("pref_sync_port"));
+            bindPreferenceSummaryToValue(findPreference("pref_alive_interval"));
         }
     }
 }

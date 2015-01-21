@@ -13,13 +13,13 @@
     <RelativeLayout
         android:orientation="vertical"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="140dp">
 
 
         <TextView
             android:text="@string/app_status"
             android:layout_width="match_parent"
-            android:layout_height="100dp"
+            android:layout_height="fill_parent"
             android:id="@+id/textStatus"
             android:minWidth="@dimen/dialog_fixed_width_minor"
             android:gravity="bottom|center"
@@ -32,6 +32,18 @@
 
         <!--Depth is determined by order of code. We want the following to be on top-->
         <TextView
+            style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+            android:text="@string/secret"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/secret_key_text_view"
+            android:gravity="bottom|left"
+            android:textAlignment="center"
+            android:textIsSelectable="false"
+            android:textSize="@dimen/time_left_unlocked_fontsize"
+            android:typeface="sans" />
+
+        <TextView
             android:text="@string/time_to_lock"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -40,7 +52,10 @@
             style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
             android:textAlignment="center"
             android:textIsSelectable="false"
-            android:textSize="@dimen/time_left_unlocked_fontsize" />
+            android:textSize="@dimen/time_left_unlocked_fontsize"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
     </RelativeLayout>
 
@@ -70,8 +85,8 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Change status"
-        android:onClick="onChangeStatus"
+        android:text="Lock app"
+        android:onClick="onLockApp"
         android:id="@+id/changeStatusButton"
         android:layout_alignParentBottom="true" />
 
@@ -103,7 +118,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Small Text"
+        android:text="Version number"
         android:id="@+id/versionTextView" />
 
 </LinearLayout>

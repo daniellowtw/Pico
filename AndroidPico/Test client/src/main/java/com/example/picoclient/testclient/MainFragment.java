@@ -15,6 +15,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -26,10 +27,10 @@ import java.util.Scanner;
 
 import javax.crypto.BadPaddingException;
 
-public class MainFragment extends Fragment{
+public class MainFragment extends Fragment {
+    // TODO: Put this in preferences
     static protected Boolean unlockedState = false;
     static protected Boolean isPolling = false;
-    private PollingBroadcastReceiver pollingBroadcastReceiver;
     Button createFileButton = null;
     Button readFileButton = null;
     Button connectToServerButton = null;
@@ -37,17 +38,34 @@ public class MainFragment extends Fragment{
     Button decryptFileButton = null;
     TextView lastLog = null;
     TextView statusTextView;
+    TextView secretKeyTV;
+    private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
     public MainFragment() {
+    }
+
+    private void showSecretTV() {
+        if (secretKeyTV != null) {
+            secretKeyTV.setText("Secret key: " + getActivity().getPreferences(Context.MODE_PRIVATE).getString("SecretKey", "--"));
+        } else {
+            Log.e("Can't find view", "secret key text view");
+        }
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.e(this.getClass().getSimpleName(), "onStart");
+        showSecretTV();
     }
 
     // This will be called by MainActivity Receiver when the decrypt file intent is sent by the service
     void decryptFile(Context ctx1, String key) {
         final Context ctx = ctx1;
         Encryptor e = new Encryptor();
-        String fileSecret = readFile(ctx.getApplicationContext());
         try {
+            String fileSecret = readFile(ctx.getApplicationContext());
             String temp = e.decrypt(fileSecret, Base64.decode(key, Base64.DEFAULT));
             Toast.makeText(ctx, "File content is: " + temp, Toast.LENGTH_SHORT).show();
             Log.i("Decrypt", "file is " + temp);
@@ -69,6 +87,9 @@ public class MainFragment extends Fragment{
         } catch (UnsupportedEncodingException e1) {
             Log.i("Decrypt", "UnsupportedEncodingException");
             e1.printStackTrace();
+        } catch (FileNotFoundException e1) {
+            Log.i("Decrypt", "File no available");
+            Toast.makeText(ctx, "File not found", Toast.LENGTH_SHORT).show();
         }
         Log.i("ButtonPress", "Decrypt secret share button pressed");
     }
@@ -77,11 +98,11 @@ public class MainFragment extends Fragment{
         Button tempTestButton = (Button) v.findViewById(R.id.tempButton);
         Log.i("Listener", "Toggle Polling");
         if (!isPolling) {
-            pollingBroadcastReceiver.SetAlarm(getActivity().getApplicationContext());
+            alarmBroadcastReceiver.setPollingAlarm(getActivity().getApplicationContext());
             tempTestButton.setText("Stop polling");
             isPolling = true;
         } else {
-            pollingBroadcastReceiver.CancelAlarm(getActivity().getApplicationContext());
+            alarmBroadcastReceiver.cancelPollingAlarm(getActivity().getApplicationContext());
             tempTestButton.setText("Start polling");
             isPolling = false;
         }
@@ -97,7 +118,7 @@ public class MainFragment extends Fragment{
             Encryptor encryptor = new Encryptor();
             // TODO: Need to delete this from memory because it contains key
             String ciphertext = encryptor.encryptWithoutPassword(TESTSTRING);
-            PollIntentService.saveKey(getActivity().getApplicationContext(), uid, new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
+            ServerAPIIntentService.saveKey(getActivity().getApplicationContext(), uid, new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
             FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             osw.write(ciphertext);
@@ -110,25 +131,22 @@ public class MainFragment extends Fragment{
         // End create a new file
     }
 
-    String readFile(Context ctx) {
-        try {
-            FileInputStream fIn = ctx.openFileInput("samplefile.txt");
-            InputStreamReader isr = new InputStreamReader(fIn);
-            Scanner s = new Scanner(isr);
-            String readString = s.nextLine();
-            Log.i("File Reading stuff", "success = " + readString);
-            return readString;
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-            return "Error getting string";
-        }
+    String readFile(Context ctx) throws FileNotFoundException {
+        FileInputStream fIn = ctx.openFileInput("samplefile.txt");
+        InputStreamReader isr = new InputStreamReader(fIn);
+        Scanner s = new Scanner(isr);
+        String readString = s.nextLine();
+        Log.i("File Reading stuff", "success = " + readString);
+        return readString;
     }
 
     public void lockApp() {
-        Log.i("action", "unlock App");
+        Log.i("action", "lock App");
+        getActivity().getPreferences(Context.MODE_PRIVATE).edit().putString("SecretKey", "-").commit();
         unlockedState = false;
         statusTextView.setText(R.string.app_status_locked);
         statusTextView.setBackgroundColor(Color.RED);
+        showSecretTV();
     }
 
     public void unlockApp() {
@@ -136,32 +154,15 @@ public class MainFragment extends Fragment{
         unlockedState = true;
         statusTextView.setText(R.string.app_status_unlocked);
         statusTextView.setBackgroundColor(Color.GREEN);
-    }
-
-    void changeStatus(View view) {
-        Log.e("Info state", unlockedState.toString());
-        // we are changing from unlocked to locked
-//        if (unlockedState == true) {
-//            // remove task from handler
-//            timerHandler.removeCallbacks(timerRunnable);
-//            lockApp(statusTextView);
-//        } else {
-//            // we are changing from locked to unlocked so add timer
-//            // add 10 seconds to the endTime
-//            endTime = System.currentTimeMillis() + 4000;
-//            // start the handler
-//            timerHandler.postDelayed(timerRunnable, 0);
-//            unlockApp(statusTextView);
-//        }
+        showSecretTV();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        pollingBroadcastReceiver = new PollingBroadcastReceiver();
+        alarmBroadcastReceiver = new AlarmBroadcastReceiver();
         uid = Settings.Secure.getString(getActivity().getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
         createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
         readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
@@ -169,9 +170,10 @@ public class MainFragment extends Fragment{
         changeStatusButton = (Button) rootView.findViewById(R.id.changeStatusButton);
         decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
         lastLog = (TextView) rootView.findViewById(R.id.lastLog);
+        secretKeyTV = (TextView) rootView.findViewById(R.id.secret_key_text_view);
         lockApp();
         TextView tv = (TextView) rootView.findViewById(R.id.versionTextView);
-        tv.setText(BuildConfig.VERSION_NAME);
+        tv.setText("v" + BuildConfig.VERSION_NAME);
         return rootView;
     }
 }
