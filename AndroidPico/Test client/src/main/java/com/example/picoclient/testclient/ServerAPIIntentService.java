@@ -5,6 +5,8 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -20,15 +22,18 @@ import java.net.UnknownHostException;
 public class ServerAPIIntentService extends IntentService {
     // The following are possible actions
     public static final String START_POLLING = "START_POLLING";
+    public static final String UNLOCK_APP = "UNLOCK_APP";
     public static final String LOCK_APP = "LOCK_APP";
     public static final String GET_COUNT = "GET_COUNT";
-    public static final String GET_DECRYPTION_KEY = "GET_DECRYPTION_KEY";
+//    public static final String GET_DECRYPTION_KEY = "GET_DECRYPTION_KEY";
     public static final String SET_DECRYPTION_KEY = "SET_DECRYPTION_KEY";
     public static final String UID = "UID";
     public static final String KEY = "KEY";
     private final String TAG = this.getClass().getSimpleName();
     int counter = 0;
     NotificationManager nm;
+    SharedPreferences prefs;
+    AlarmBroadcastReceiver alarmBroadcastReceiver;
     private int NotificationID = R.string.notification_id;
 
     public ServerAPIIntentService() {
@@ -55,12 +60,19 @@ public class ServerAPIIntentService extends IntentService {
         context.startService(intent);
     }
 
-    public static void getDecryptKey(Context context, String uid) {
+    public static void unlockApp(Context context, String uid) {
         Intent intent = new Intent(context, ServerAPIIntentService.class);
-        intent.setAction(GET_DECRYPTION_KEY);
+        intent.setAction(UNLOCK_APP);
         intent.putExtra(UID, uid);
         context.startService(intent);
     }
+
+//    public static void getDecryptKey(Context context, String uid) {
+//        Intent intent = new Intent(context, ServerAPIIntentService.class);
+//        intent.setAction(GET_DECRYPTION_KEY);
+//        intent.putExtra(UID, uid);
+//        context.startService(intent);
+//    }
 
     public static void saveKey(Context context, String uid, String key) {
         Intent intent = new Intent(context, ServerAPIIntentService.class);
@@ -74,13 +86,15 @@ public class ServerAPIIntentService extends IntentService {
     public void onCreate() {
         super.onCreate();
         nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        Log.i(TAG, "onCreate called");
+        prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        alarmBroadcastReceiver = new AlarmBroadcastReceiver();
+        Log.v(TAG, "onCreate called");
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(TAG, "onDestroy called");
+        Log.v(TAG, "onDestroy called");
     }
 
     @Override
@@ -93,13 +107,18 @@ public class ServerAPIIntentService extends IntentService {
 
                 if (START_POLLING.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
-                    handleActionPollServer(uid);
+                    handleUnlockApp(uid);
                 } else if (GET_COUNT.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleGetKeyCount(uid);
-                } else if (GET_DECRYPTION_KEY.equals(action)) {
+                    // There is no need for this. We should already have the key so no need to ask
+                    // from server, instead, replace this with unlockApp, which stores the key
+//                } else if (GET_DECRYPTION_KEY.equals(action)) {
+//                    final String uid = intent.getStringExtra(UID);
+//                    handleGetDecryptionKey(uid);
+                } else if (UNLOCK_APP.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
-                    handleGetDecryptionKey(uid);
+                    handleUnlockApp(uid);
                 } else if (SET_DECRYPTION_KEY.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     final String key = intent.getStringExtra(KEY);
@@ -108,26 +127,37 @@ public class ServerAPIIntentService extends IntentService {
                     handleLockApp();
                 }
             } catch (IOException e) {
-                showNotification("Error", e.getLocalizedMessage(), false);
-                Log.e(TAG, e.getLocalizedMessage());
+                incrementFailedCount();
+                showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
+                Log.e(TAG, e.getStackTrace().toString());
+                e.printStackTrace();
             }
         }
     }
 
     private void handleLockApp() {
-        Intent localIntent =
-                new Intent(MainActivity.LOCK_APP);
-        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-    }
-
-    private void handleGetDecryptionKey(String uid) throws IOException {
-        String messageToSend = "get]" + uid;
-        String result = sendStringToServer(messageToSend);
-        Intent localIntent =
-                new Intent(MainActivity.DECRYPT_FILE).putExtra("decryptionKey", result);
+        // Delete key from shared pref
+        prefs.edit().remove("secretKey").commit();
+        // tell mainactivity to update UI
+        Intent localIntent = new Intent(MainActivity.LOCK_APP);
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
 
     }
+
+    // Old way
+//    private void handleLockApp() {
+//        Intent localIntent = new Intent(MainActivity.LOCK_APP);
+//        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+//    }
+
+//    private void handleGetDecryptionKey(String uid) throws IOException {
+//        String messageToSend = "get]" + uid;
+//        String result = sendStringToServer(messageToSend);
+//        Intent localIntent =
+//                new Intent(MainActivity.DECRYPT_FILE).putExtra("decryptionKey", result);
+//        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+//
+//    }
 
     private void handleGetKeyCount(String uid) throws IOException {
         String messageToSend = "key]" + uid;
@@ -151,17 +181,35 @@ public class ServerAPIIntentService extends IntentService {
         }
     }
 
-    private void handleActionPollServer(String uid) throws IOException {
+    private void handleUnlockApp(String uid) throws IOException {
         String messageToSend = "get]" + uid;
-        String result = sendStringToServer(messageToSend);
-        if (result.isEmpty()) {
+        String key = sendStringToServer(messageToSend);
+        if (key.isEmpty()) {
             showNotification("Error: revoked/missing key", "Key is not found on server", false);
         } else {
+            incrementSuccessCount();
+            prefs.edit().putString("secretKey", key).commit();
+            // tell mainactivity to update UI
             Intent localIntent = new Intent(MainActivity.UNLOCK_APP);
-            localIntent.putExtra("Secret", result);
             LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+            // every time unlock is called, we set a timer to lock it (ie remove secret)
+            alarmBroadcastReceiver.setLockingAlarm(this);
         }
     }
+
+//    Old method - Delegate locking to main activity. But main activity can be destroyed, causing the app to crash.
+//    private void handleActionPollServer(String uid) throws IOException {
+//        String messageToSend = "get]" + uid;
+//        String key = sendStringToServer(messageToSend);
+//        if (key.isEmpty()) {
+//            showNotification("Error: revoked/missing key", "Key is not found on server", false);
+//        } else {
+//            incrementSuccessCount();
+//            Intent localIntent = new Intent(MainActivity.UNLOCK_APP);
+//            localIntent.putExtra("Secret", key);
+//            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+//        }
+//    }
 
     // The following are helper functions
     private String sendStringToServer(String s) throws IOException {
@@ -181,7 +229,7 @@ public class ServerAPIIntentService extends IntentService {
         } catch (UnknownHostException e) {
             throw e;
         } catch (IOException e) {
-            Log.e("Exception", e.getLocalizedMessage());
+            Log.e("Exception", e.getMessage());
             throw e;
         }
     }
@@ -202,4 +250,21 @@ public class ServerAPIIntentService extends IntentService {
         }
     }
 
+    private void incrementFailedCount() {
+        // Increment failed count in app
+        if (prefs.contains("failedAttempts")) {
+            prefs.edit().putInt("failedAttempts", prefs.getInt("failedAttempts", 0) + 1).commit();
+        } else {
+            prefs.edit().putInt("failedAttempts", 1).commit();
+        }
+    }
+
+    private void incrementSuccessCount() {
+        // Increment successful count in app
+        if (prefs.contains("successfulAttempts")) {
+            prefs.edit().putInt("successfulAttempts", prefs.getInt("successfulAttempts", 0) + 1).commit();
+        } else {
+            prefs.edit().putInt("successfulAttempts", 1).commit();
+        }
+    }
 }

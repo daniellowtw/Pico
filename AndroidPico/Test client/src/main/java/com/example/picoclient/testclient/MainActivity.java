@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -52,23 +54,32 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     protected void onStart() {
-        Log.i(this.getClass().getSimpleName(), "onStart called " + getApplicationContext());
+        Log.v(this.getClass().getSimpleName(), "onStart called ");
         Log.i(this.getClass().getSimpleName(), "Secret is " + appPref.getString("SecretKey", "No secret found"));
+        // Make sure I keep the fragment view consistent with the state
+//        Button tempTestButton = (Button) findViewById(R.id.togglePollButton);
+//        if (!appPref.getBoolean("isPolling", false)) {
+//            tempTestButton.setText("Start polling");
+//            appPref.edit().putBoolean("isPolling", true).commit();
+//        } else {
+//            tempTestButton.setText("Stop polling");
+//            appPref.edit().putBoolean("isPolling", false).commit();
+//        }
         super.onStart();
     }
 
     @Override
     protected void onResume() {
-        Log.i(this.getClass().getSimpleName(), "onStop called");
+        Log.v(this.getClass().getSimpleName(), "onStop called");
         super.onResume();
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(this.getClass().getSimpleName(), "onCreate called");
+        Log.v(this.getClass().getSimpleName(), "onCreate called");
         alarmBroadcastReceiver = new AlarmBroadcastReceiver();
         //The following preference can only be accessed by the activity.
-        appPref = getPreferences(Context.MODE_PRIVATE);
+        appPref = PreferenceManager.getDefaultSharedPreferences(this);
         mainFragment = new MainFragment();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -103,6 +114,10 @@ public class MainActivity extends ActionBarActivity {
             Intent i = new Intent(this, SettingsActivity.class);
             startActivity(i);
             return true;
+        } else if (id == R.id.action_log) {
+            Intent i = new Intent(getApplicationContext(), LogActivity.class);
+            startActivity(i);
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
@@ -122,56 +137,110 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void onTogglePolling(View v) {
-        if (mainFragment != null) {
-            mainFragment.togglePolling(v);
+        Button tempTestButton = (Button) findViewById(R.id.togglePollButton);
+        Log.i("Listener", "Toggle Polling");
+        if (!appPref.getBoolean("isPolling", false)) {
+            // Start polling
+            alarmBroadcastReceiver.setPollingAlarm(getApplicationContext());
+            tempTestButton.setText("Stop polling");
+            appPref.edit().putBoolean("isPolling", true).commit();
+        } else {
+            // Start polling
+            alarmBroadcastReceiver.cancelPollingAlarm(getApplicationContext());
+            tempTestButton.setText("Start polling");
+            appPref.edit().putBoolean("isPolling", false).commit();
         }
     }
 
-    public void onConnectServer(View v) {
+    public void onKeyCount(View v) {
         ServerAPIIntentService.getKeyCount(getApplicationContext(), uid);
         Log.i("ButtonPress", "Asking for key Count");
     }
 
-    public void onLockApp(View v) {
-        mainFragment.lockApp();
+    public void onLockOrUnlockApp(View v) {
+        if (appPref.contains("secretKey")) {
+            //lock
+            ServerAPIIntentService.lockApp(this);
+        } else {
+            //unlock
+            ServerAPIIntentService.unlockApp(this, uid);
+        }
     }
 
     public void onDecrypt(View v) {
-        ServerAPIIntentService.getDecryptKey(getApplicationContext(), uid);
+        if (appPref.contains("secretKey")) {
+            mainFragment.decryptFile(this, appPref.getString("secretKey", "null"));
+        } else {
+            Toast.makeText(this, "No key found", Toast.LENGTH_SHORT).show();
+        }
         Log.i("ButtonPress", "Asking for Decryption key");
+    }
+
+    // Old Method. Now we don't ask server when we want to decrypt. We should already have the key if it is unlocked
+//    public void onDecrypt(View v) {
+//        ServerAPIIntentService.getDecryptKey(getApplicationContext(), uid);
+//        Log.i("ButtonPress", "Asking for Decryption key");
+//    }
+
+    public void tempFunction(View v) {
+        Toast.makeText(this, appPref.getAll().toString(), Toast.LENGTH_LONG).show();
     }
 
     // This instance doesn't get destroyed after handling a broadcast
     private class ResponseReceiver extends BroadcastReceiver {
-        SharedPreferences appPref;
+//        SharedPreferences appPref
 
         public void onReceive(Context context, Intent intent) {
-            if (appPref == null) {
-                Log.i("receiver", "appPref not defined");
-            }
-            appPref = getPreferences(Context.MODE_PRIVATE);
+//            if (appPref == null) {
+//                Log.i("receiver", "appPref not defined");
+//            }
+//            appPref = getPreferences(Context.MODE_PRIVATE);
             Log.i("ResponseReceiver", "Received intent " + intent.getAction() + context);
+
+            // Old way
+//            if (intent != null) {
+////                if (UNLOCK_APP.equals(intent.getAction())) {
+////                    alarmBroadcastReceiver.setLockingAlarm(getApplicationContext());
+////                    SharedPreferences.Editor editor = appPref.edit();
+////                    editor.putInt("KeyCount", appPref.getInt("KeyCount", 0) + 1);
+////                    editor.putString("SecretKey", intent.getStringExtra("Secret"));
+////                    if (editor.commit()) {
+////                        Log.i(this.getClass().getSimpleName(), "Commit successful");
+////                    }
+////                    Log.i(this.getClass().getSimpleName(), "unlocking app on intent, secret is " + appPref.getString("SecretKey", "none"));
+////                    if (mainFragment.isVisible()) {
+////                        mainFragment.unlockApp();
+////                    }
+////                } else if (LOCK_APP.equals(intent.getAction())) {
+////                    Log.i(this.getClass().getSimpleName(), "locking app on intent");
+////                    mainFragment.lockApp();
+////                } else if (DECRYPT_FILE.equals(intent.getAction())) {
+////                    String key = intent.getStringExtra("decryptionKey");
+////                    Log.i(this.getClass().getSimpleName(), "Key is " + key);
+////                    if (key == null) {
+////                        Toast.makeText(getApplicationContext(), R.string.missing_key, Toast.LENGTH_SHORT).show();
+////                    } else {
+////                        mainFragment.decryptFile(getApplicationContext(), key);
+////                    }
+////                } else
+//                if (NOTIFY_USER.equals(intent.getAction())) {
+//                    String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);
+//                    Log.i(this.getClass().getSimpleName(), "Message to user is " + message);
+//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+//                }
+//            }
+
+            // We still need a receiver to update app UI when alarm goes off
             if (intent != null) {
                 if (UNLOCK_APP.equals(intent.getAction())) {
-                    alarmBroadcastReceiver.setLockingAlarm(getApplicationContext());
-                    SharedPreferences.Editor editor = appPref.edit();
-                    editor.putInt("KeyCount", appPref.getInt("KeyCount", 0) + 1);
-                    editor.putString("SecretKey", intent.getStringExtra("Secret"));
-                    if (editor.commit()) {
-                        Log.i(this.getClass().getSimpleName(), "Commit successful");
+                    Log.i(this.getClass().getSimpleName(), "unlocking app on intent");
+                    if (mainFragment.isVisible()) {
+                        mainFragment.unlockApp();
                     }
-                    Log.i(this.getClass().getSimpleName(), "unlocking app on intent, secret is " + appPref.getString("SecretKey", "none"));
-                    mainFragment.unlockApp();
                 } else if (LOCK_APP.equals(intent.getAction())) {
                     Log.i(this.getClass().getSimpleName(), "locking app on intent");
-                    mainFragment.lockApp();
-                } else if (DECRYPT_FILE.equals(intent.getAction())) {
-                    String key = intent.getStringExtra("decryptionKey");
-                    Log.i(this.getClass().getSimpleName(), "Key is " + key);
-                    if (key == null) {
-                        Toast.makeText(getApplicationContext(), R.string.missing_key, Toast.LENGTH_SHORT).show();
-                    } else {
-                        mainFragment.decryptFile(getApplicationContext(), key);
+                    if (mainFragment.isVisible()) {
+                        mainFragment.lockApp();
                     }
                 } else if (NOTIFY_USER.equals(intent.getAction())) {
                     String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);

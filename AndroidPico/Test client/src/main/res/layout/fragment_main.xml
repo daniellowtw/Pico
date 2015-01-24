@@ -60,52 +60,67 @@
     </RelativeLayout>
 
     <Button
-        android:layout_width="match_parent"
+        android:layout_width="fill_parent"
         android:layout_height="@dimen/abc_action_bar_default_height"
         android:layout_below="@+id/textStatus"
         android:text="Create file"
         android:onClick="onCreateFile"
-        android:id="@+id/createFileButton" />
+        android:id="@+id/createFileButton"/>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/abc_action_bar_default_height"
-        android:text="Show file content"
-        android:onClick="onShowFile"
-        android:id="@+id/readFileButton" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="View file"
+            android:onClick="onShowFile"
+            android:id="@+id/readFileButton"
+            android:layout_weight="1"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Decrypt file"
+            android:onClick="onDecrypt"
+            android:id="@+id/decryptFileButton"
+            android:layout_weight="1" />
+    </LinearLayout>
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Get key count"
-        android:onClick="onConnectServer"
-        android:id="@+id/connectToServerButton"
+        android:onClick="onKeyCount"
+        android:id="@+id/getKeyCountButton"
         android:layout_alignParentBottom="true" />
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Lock app"
-        android:onClick="onLockApp"
-        android:id="@+id/changeStatusButton"
+        android:onClick="onLockOrUnlockApp"
+        android:id="@+id/lockOrUnlockButton"
         android:layout_alignParentBottom="true" />
 
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Decrypt file content"
-        android:onClick="onDecrypt"
-        android:id="@+id/decryptFileButton"
-        android:layout_alignParentBottom="true" />
 
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Start polling"
         android:onClick="onTogglePolling"
-        android:id="@+id/tempButton"
+        android:id="@+id/togglePollButton"
         android:layout_alignParentBottom="true" />
+
+    <Button
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Start temp function"
+    android:onClick="tempFunction"
+    android:id="@+id/tempButton"
+    android:layout_alignParentBottom="true" />
 
     <TextView
         android:layout_width="match_parent"

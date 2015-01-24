@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -38,7 +39,8 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         // Inexact reduces battery drain associated with waking the device to perform polling.
         // However, the frequencies are INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR,
         // INTERVAL_HALF_DAY, INTERVAL_DAY
-        am.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), 1000 * 10, pi); // Millisec * Second * Minute
+        String interval = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_interval", "0");
+        am.setInexactRepeating(AlarmManager.RTC, System.currentTimeMillis(), Integer.parseInt(interval), pi); // Millisec * Second * Minute
         Log.i("ALARM", "Polling Alarm set");
     }
 
@@ -47,7 +49,8 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         Intent i = new Intent(context, AlarmBroadcastReceiver.class);
         i.setAction(LOCKING_ALARM_ACTION);
         PendingIntent pi = PendingIntent.getBroadcast(context, LOCKING_ALARM, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        am.set(AlarmManager.RTC, System.currentTimeMillis() + 1000 * 5, pi); // Lock the app after 5 sec
+        String interval = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_alive_interval", "0");
+        am.set(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after 5 sec
         Log.i("ALARM", "Locking alarm set");
     }
 

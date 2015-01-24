@@ -1,8 +1,10 @@
 package com.example.picoclient.testclient;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.Fragment;
 import android.util.Base64;
@@ -33,12 +35,14 @@ public class MainFragment extends Fragment {
     static protected Boolean isPolling = false;
     Button createFileButton = null;
     Button readFileButton = null;
-    Button connectToServerButton = null;
-    Button changeStatusButton = null;
+    Button getKeyCountButton = null;
+    Button lockOrUnlockButton = null;
     Button decryptFileButton = null;
+    Button togglePollButton = null;
     TextView lastLog = null;
     TextView statusTextView;
     TextView secretKeyTV;
+    SharedPreferences prefs;
     private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
@@ -47,7 +51,7 @@ public class MainFragment extends Fragment {
 
     private void showSecretTV() {
         if (secretKeyTV != null) {
-            secretKeyTV.setText("Secret key: " + getActivity().getPreferences(Context.MODE_PRIVATE).getString("SecretKey", "--"));
+            secretKeyTV.setText("Secret key: " + prefs.getString("secretKey", "No Secret found"));
         } else {
             Log.e("Can't find view", "secret key text view");
         }
@@ -56,7 +60,10 @@ public class MainFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        Log.e(this.getClass().getSimpleName(), "onStart");
+        Log.v(this.getClass().getSimpleName(), "onStart");
+        if (prefs == null) {
+            prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        }
         showSecretTV();
     }
 
@@ -94,25 +101,26 @@ public class MainFragment extends Fragment {
         Log.i("ButtonPress", "Decrypt secret share button pressed");
     }
 
-    public void togglePolling(View v) {
-        Button tempTestButton = (Button) v.findViewById(R.id.tempButton);
-        Log.i("Listener", "Toggle Polling");
-        if (!isPolling) {
-            alarmBroadcastReceiver.setPollingAlarm(getActivity().getApplicationContext());
-            tempTestButton.setText("Stop polling");
-            isPolling = true;
-        } else {
-            alarmBroadcastReceiver.cancelPollingAlarm(getActivity().getApplicationContext());
-            tempTestButton.setText("Start polling");
-            isPolling = false;
-        }
-    }
+//    Old method. Do this at activity level instead
+//    public void togglePolling(View v) {
+//        Button tempTestButton = (Button) v.findViewById(R.id.togglePollButton);
+//        Log.i("Listener", "Toggle Polling");
+//        if (!isPolling) {
+//            alarmBroadcastReceiver.setPollingAlarm(getActivity().getApplicationContext());
+//            tempTestButton.setText("Stop polling");
+//            isPolling = true;
+//        } else {
+//            alarmBroadcastReceiver.cancelPollingAlarm(getActivity().getApplicationContext());
+//            tempTestButton.setText("Start polling");
+//            isPolling = false;
+//        }
+//    }
 
     void saveFile(Context ctx) {
         // Create a new file
         try {
             // catches IOException below
-            Log.e("action", "saving file");
+            Log.v("action", "saving file");
             final String TESTSTRING = new String("Hello Android");
             // Encrypt string
             Encryptor encryptor = new Encryptor();
@@ -122,7 +130,7 @@ public class MainFragment extends Fragment {
             FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
             OutputStreamWriter osw = new OutputStreamWriter(fOut);
             osw.write(ciphertext);
-            Log.e("data", ciphertext);
+            Log.v("data", ciphertext);
             osw.flush();
             osw.close();
         } catch (IOException ioe) {
@@ -142,10 +150,11 @@ public class MainFragment extends Fragment {
 
     public void lockApp() {
         Log.i("action", "lock App");
-        getActivity().getPreferences(Context.MODE_PRIVATE).edit().putString("SecretKey", "-").commit();
         unlockedState = false;
         statusTextView.setText(R.string.app_status_locked);
         statusTextView.setBackgroundColor(Color.RED);
+        lockOrUnlockButton.setText("Unlock app");
+        Log.i("OKOK", "KEY REMOVED, Probably, Expecting no key here" + prefs.getString("secretKey", "no key found"));
         showSecretTV();
     }
 
@@ -154,6 +163,7 @@ public class MainFragment extends Fragment {
         unlockedState = true;
         statusTextView.setText(R.string.app_status_unlocked);
         statusTextView.setBackgroundColor(Color.GREEN);
+        lockOrUnlockButton.setText("Lock app");
         showSecretTV();
     }
 
@@ -166,12 +176,29 @@ public class MainFragment extends Fragment {
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
         createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
         readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
-        connectToServerButton = (Button) rootView.findViewById(R.id.connectToServerButton);
-        changeStatusButton = (Button) rootView.findViewById(R.id.changeStatusButton);
+        getKeyCountButton = (Button) rootView.findViewById(R.id.getKeyCountButton);
+        lockOrUnlockButton = (Button) rootView.findViewById(R.id.lockOrUnlockButton);
         decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
+        togglePollButton = (Button) rootView.findViewById(R.id.togglePollButton);
         lastLog = (TextView) rootView.findViewById(R.id.lastLog);
         secretKeyTV = (TextView) rootView.findViewById(R.id.secret_key_text_view);
-        lockApp();
+        Log.v(this.getClass().getSimpleName(), "onCreateView called");
+        if (prefs == null) {
+            Log.i("OKOK", "OKOK");
+            prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            Log.i("OKOK", prefs.getAll().toString());
+        }
+        int toggleButtonText = prefs.getBoolean("isPolling", false) ? R.string.stop_polling : R.string.start_polling;
+        togglePollButton.setText(toggleButtonText);
+
+        if (prefs.contains("secretKey")) {
+            Log.i("okok", prefs.getString("secretKey", "no secret la"));
+            lockOrUnlockButton.setText(R.string.lock_app);
+            unlockApp();
+        } else {
+            lockOrUnlockButton.setText(R.string.unlock_app);
+            lockApp();
+        }
         TextView tv = (TextView) rootView.findViewById(R.id.versionTextView);
         tv.setText("v" + BuildConfig.VERSION_NAME);
         return rootView;
