@@ -25,7 +25,6 @@ public class ServerAPIIntentService extends IntentService {
     public static final String UNLOCK_APP = "UNLOCK_APP";
     public static final String LOCK_APP = "LOCK_APP";
     public static final String GET_COUNT = "GET_COUNT";
-//    public static final String GET_DECRYPTION_KEY = "GET_DECRYPTION_KEY";
     public static final String SET_DECRYPTION_KEY = "SET_DECRYPTION_KEY";
     public static final String UID = "UID";
     public static final String KEY = "KEY";
@@ -67,13 +66,6 @@ public class ServerAPIIntentService extends IntentService {
         context.startService(intent);
     }
 
-//    public static void getDecryptKey(Context context, String uid) {
-//        Intent intent = new Intent(context, ServerAPIIntentService.class);
-//        intent.setAction(GET_DECRYPTION_KEY);
-//        intent.putExtra(UID, uid);
-//        context.startService(intent);
-//    }
-
     public static void saveKey(Context context, String uid, String key) {
         Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(SET_DECRYPTION_KEY);
@@ -111,11 +103,6 @@ public class ServerAPIIntentService extends IntentService {
                 } else if (GET_COUNT.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleGetKeyCount(uid);
-                    // There is no need for this. We should already have the key so no need to ask
-                    // from server, instead, replace this with unlockApp, which stores the key
-//                } else if (GET_DECRYPTION_KEY.equals(action)) {
-//                    final String uid = intent.getStringExtra(UID);
-//                    handleGetDecryptionKey(uid);
                 } else if (UNLOCK_APP.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleUnlockApp(uid);
@@ -129,7 +116,7 @@ public class ServerAPIIntentService extends IntentService {
             } catch (IOException e) {
                 incrementFailedCount();
                 showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
-                Log.e(TAG, e.getStackTrace().toString());
+                Log.e(TAG, e.getMessage());
                 e.printStackTrace();
             }
         }
@@ -144,27 +131,13 @@ public class ServerAPIIntentService extends IntentService {
 
     }
 
-    // Old way
-//    private void handleLockApp() {
-//        Intent localIntent = new Intent(MainActivity.LOCK_APP);
-//        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-//    }
-
-//    private void handleGetDecryptionKey(String uid) throws IOException {
-//        String messageToSend = "get]" + uid;
-//        String result = sendStringToServer(messageToSend);
-//        Intent localIntent =
-//                new Intent(MainActivity.DECRYPT_FILE).putExtra("decryptionKey", result);
-//        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-//
-//    }
-
     private void handleGetKeyCount(String uid) throws IOException {
         String messageToSend = "key]" + uid;
         String result = sendStringToServer(messageToSend);
         showNotification("KeyCount", result, true);
         Intent localIntent =
-                new Intent(MainActivity.NOTIFY_USER).putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
+                new Intent(MainActivity.NOTIFY_USER)
+                        .putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
         LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
 
@@ -197,26 +170,14 @@ public class ServerAPIIntentService extends IntentService {
         }
     }
 
-//    Old method - Delegate locking to main activity. But main activity can be destroyed, causing the app to crash.
-//    private void handleActionPollServer(String uid) throws IOException {
-//        String messageToSend = "get]" + uid;
-//        String key = sendStringToServer(messageToSend);
-//        if (key.isEmpty()) {
-//            showNotification("Error: revoked/missing key", "Key is not found on server", false);
-//        } else {
-//            incrementSuccessCount();
-//            Intent localIntent = new Intent(MainActivity.UNLOCK_APP);
-//            localIntent.putExtra("Secret", key);
-//            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
-//        }
-//    }
-
     // The following are helper functions
     private String sendStringToServer(String s) throws IOException {
         try {
-            InetSocketAddress addr = new InetSocketAddress(PicoConfig.serverAddr, PicoConfig.SSL_serverPort);
+            String serverAddr = prefs.getString("pref_sync_addr", "dlow.me");
+            int serverPort = Integer.parseInt(prefs.getString("pref_sync_port", "8001"));
+            InetSocketAddress addr = new InetSocketAddress(serverAddr , serverPort);
             Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
-            ss.connect(addr, 100);
+            ss.connect(addr, 1000);
             BufferedReader br = new BufferedReader(new InputStreamReader(ss.getInputStream()));
             PrintWriter out = new PrintWriter(ss.getOutputStream());
             // welcome message ignore

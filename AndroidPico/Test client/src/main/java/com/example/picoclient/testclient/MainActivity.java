@@ -30,7 +30,6 @@ public class MainActivity extends ActionBarActivity {
     /* Putting state variables here so they can be persistent throughout Activity's life */
     MainFragment mainFragment;
     SharedPreferences appPref;
-    // TODO: Should this be here or in the fragment?
     private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
@@ -55,16 +54,6 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStart() {
         Log.v(this.getClass().getSimpleName(), "onStart called ");
-        Log.i(this.getClass().getSimpleName(), "Secret is " + appPref.getString("SecretKey", "No secret found"));
-        // Make sure I keep the fragment view consistent with the state
-//        Button tempTestButton = (Button) findViewById(R.id.togglePollButton);
-//        if (!appPref.getBoolean("isPolling", false)) {
-//            tempTestButton.setText("Start polling");
-//            appPref.edit().putBoolean("isPolling", true).commit();
-//        } else {
-//            tempTestButton.setText("Stop polling");
-//            appPref.edit().putBoolean("isPolling", false).commit();
-//        }
         super.onStart();
     }
 
@@ -176,59 +165,15 @@ public class MainActivity extends ActionBarActivity {
         Log.i("ButtonPress", "Asking for Decryption key");
     }
 
-    // Old Method. Now we don't ask server when we want to decrypt. We should already have the key if it is unlocked
-//    public void onDecrypt(View v) {
-//        ServerAPIIntentService.getDecryptKey(getApplicationContext(), uid);
-//        Log.i("ButtonPress", "Asking for Decryption key");
-//    }
-
     public void tempFunction(View v) {
         Toast.makeText(this, appPref.getAll().toString(), Toast.LENGTH_LONG).show();
     }
 
     // This instance doesn't get destroyed after handling a broadcast
     private class ResponseReceiver extends BroadcastReceiver {
-//        SharedPreferences appPref
 
         public void onReceive(Context context, Intent intent) {
-//            if (appPref == null) {
-//                Log.i("receiver", "appPref not defined");
-//            }
-//            appPref = getPreferences(Context.MODE_PRIVATE);
             Log.i("ResponseReceiver", "Received intent " + intent.getAction() + context);
-
-            // Old way
-//            if (intent != null) {
-////                if (UNLOCK_APP.equals(intent.getAction())) {
-////                    alarmBroadcastReceiver.setLockingAlarm(getApplicationContext());
-////                    SharedPreferences.Editor editor = appPref.edit();
-////                    editor.putInt("KeyCount", appPref.getInt("KeyCount", 0) + 1);
-////                    editor.putString("SecretKey", intent.getStringExtra("Secret"));
-////                    if (editor.commit()) {
-////                        Log.i(this.getClass().getSimpleName(), "Commit successful");
-////                    }
-////                    Log.i(this.getClass().getSimpleName(), "unlocking app on intent, secret is " + appPref.getString("SecretKey", "none"));
-////                    if (mainFragment.isVisible()) {
-////                        mainFragment.unlockApp();
-////                    }
-////                } else if (LOCK_APP.equals(intent.getAction())) {
-////                    Log.i(this.getClass().getSimpleName(), "locking app on intent");
-////                    mainFragment.lockApp();
-////                } else if (DECRYPT_FILE.equals(intent.getAction())) {
-////                    String key = intent.getStringExtra("decryptionKey");
-////                    Log.i(this.getClass().getSimpleName(), "Key is " + key);
-////                    if (key == null) {
-////                        Toast.makeText(getApplicationContext(), R.string.missing_key, Toast.LENGTH_SHORT).show();
-////                    } else {
-////                        mainFragment.decryptFile(getApplicationContext(), key);
-////                    }
-////                } else
-//                if (NOTIFY_USER.equals(intent.getAction())) {
-//                    String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);
-//                    Log.i(this.getClass().getSimpleName(), "Message to user is " + message);
-//                    Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-//                }
-//            }
 
             // We still need a receiver to update app UI when alarm goes off
             if (intent != null) {

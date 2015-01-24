@@ -30,9 +30,6 @@ import java.util.Scanner;
 import javax.crypto.BadPaddingException;
 
 public class MainFragment extends Fragment {
-    // TODO: Put this in preferences
-    static protected Boolean unlockedState = false;
-    static protected Boolean isPolling = false;
     Button createFileButton = null;
     Button readFileButton = null;
     Button getKeyCountButton = null;
@@ -43,7 +40,6 @@ public class MainFragment extends Fragment {
     TextView statusTextView;
     TextView secretKeyTV;
     SharedPreferences prefs;
-    private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
     public MainFragment() {
@@ -59,12 +55,9 @@ public class MainFragment extends Fragment {
 
     @Override
     public void onStart() {
+        // onCreateView gets called before this/
         super.onStart();
         Log.v(this.getClass().getSimpleName(), "onStart");
-        if (prefs == null) {
-            prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        }
-        showSecretTV();
     }
 
     // This will be called by MainActivity Receiver when the decrypt file intent is sent by the service
@@ -101,21 +94,6 @@ public class MainFragment extends Fragment {
         Log.i("ButtonPress", "Decrypt secret share button pressed");
     }
 
-//    Old method. Do this at activity level instead
-//    public void togglePolling(View v) {
-//        Button tempTestButton = (Button) v.findViewById(R.id.togglePollButton);
-//        Log.i("Listener", "Toggle Polling");
-//        if (!isPolling) {
-//            alarmBroadcastReceiver.setPollingAlarm(getActivity().getApplicationContext());
-//            tempTestButton.setText("Stop polling");
-//            isPolling = true;
-//        } else {
-//            alarmBroadcastReceiver.cancelPollingAlarm(getActivity().getApplicationContext());
-//            tempTestButton.setText("Start polling");
-//            isPolling = false;
-//        }
-//    }
-
     void saveFile(Context ctx) {
         // Create a new file
         try {
@@ -125,6 +103,7 @@ public class MainFragment extends Fragment {
             // Encrypt string
             Encryptor encryptor = new Encryptor();
             // TODO: Need to delete this from memory because it contains key
+            // Does storing it as a char[] change anything?
             String ciphertext = encryptor.encryptWithoutPassword(TESTSTRING);
             ServerAPIIntentService.saveKey(getActivity().getApplicationContext(), uid, new String(Base64.encodeToString(encryptor.key.getEncoded(), Base64.DEFAULT)));
             FileOutputStream fOut = ctx.openFileOutput("samplefile.txt", ctx.MODE_PRIVATE);
@@ -150,17 +129,14 @@ public class MainFragment extends Fragment {
 
     public void lockApp() {
         Log.i("action", "lock App");
-        unlockedState = false;
         statusTextView.setText(R.string.app_status_locked);
         statusTextView.setBackgroundColor(Color.RED);
         lockOrUnlockButton.setText("Unlock app");
-        Log.i("OKOK", "KEY REMOVED, Probably, Expecting no key here" + prefs.getString("secretKey", "no key found"));
         showSecretTV();
     }
 
     public void unlockApp() {
         Log.i("action", "unlock App");
-        unlockedState = true;
         statusTextView.setText(R.string.app_status_unlocked);
         statusTextView.setBackgroundColor(Color.GREEN);
         lockOrUnlockButton.setText("Lock app");
@@ -170,7 +146,6 @@ public class MainFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        alarmBroadcastReceiver = new AlarmBroadcastReceiver();
         uid = Settings.Secure.getString(getActivity().getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
@@ -184,15 +159,12 @@ public class MainFragment extends Fragment {
         secretKeyTV = (TextView) rootView.findViewById(R.id.secret_key_text_view);
         Log.v(this.getClass().getSimpleName(), "onCreateView called");
         if (prefs == null) {
-            Log.i("OKOK", "OKOK");
             prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            Log.i("OKOK", prefs.getAll().toString());
         }
         int toggleButtonText = prefs.getBoolean("isPolling", false) ? R.string.stop_polling : R.string.start_polling;
         togglePollButton.setText(toggleButtonText);
 
         if (prefs.contains("secretKey")) {
-            Log.i("okok", prefs.getString("secretKey", "no secret la"));
             lockOrUnlockButton.setText(R.string.lock_app);
             unlockApp();
         } else {
