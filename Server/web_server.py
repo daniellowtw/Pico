@@ -9,7 +9,8 @@ from twisted.web.static import File
 root = File('front/')
 
 # TODO: Use sharemanager class as db
-sharedValue = {'demo':['demosecret',0]}
+#sharedValue = {'demo':['demosecret',0]}
+_share_manager_global = None
 
 # For dev only, currently unused.
 # Read value from db
@@ -19,20 +20,22 @@ class SharedValueRes(Resource):
         self.index = index
         
     def render_GET(self, request):
-        return str(sharedValue[self.index])
+        return str(_share_manager_global.get(self.index))
         
 # For dev only
 class GetAllKeys(Resource):
     def render_GET(self, request):
-        return str(sharedValue)
+        global _share_manager_global
+        return str(_share_manager_global)
         
 class DeleteKey(Resource):
     def render_POST(self, request):
         x = request.args["revKey"][0]
-        if x not in sharedValue:
+        if _share_manager_global.get_share(x) == None:
             return "Error, key is not valid."
-        del sharedValue[x]
-        return "Key removed successfully."
+        else:
+            _share_manager_global.delete_share(x)
+            return "Key removed successfully."
 
 class APIPage(Resource):
     def getChild(self, name, request):
@@ -50,19 +53,26 @@ class APIPage(Resource):
         return ""
 
 class ServicesPage(Resource):
-    def __init__(self, shared_value = None):
-        if (shared_value!=None):
-            global sharedValue
-            sharedValue = shared_value
+    _share_manager = None
+    
+    def __init__(self, share_manager = None):
+        global _share_manager_global
+        if (share_manager!=None):
+            _share_manager_global = share_manager
+            self._share_manager = share_manager
+            print("share manager loaded")
+        else:
+            print("no share manager")
+            _share_manager_global = {}
             
         Resource.__init__(self)
         # TODO: make this default instead of ui path
         self.putChild("ui", root)
         self.putChild("api", APIPage())
         
-    def getChild(self, path, request):
+    def getChild(self, id, request):
         # for dev only
-        if path in sharedValue:
-            return SharedValueRes(path)
+        if self._share_manager.get_share(id):
+            return SharedValueRes(id)
         else:
             return NoResource()
