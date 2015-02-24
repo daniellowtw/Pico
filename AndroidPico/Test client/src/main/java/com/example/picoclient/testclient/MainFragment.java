@@ -32,7 +32,7 @@ import javax.crypto.BadPaddingException;
 public class MainFragment extends Fragment {
     Button createFileButton = null;
     Button readFileButton = null;
-    Button getKeyCountButton = null;
+//    Button getKeyCountButton = null;
     Button lockOrUnlockButton = null;
     Button decryptFileButton = null;
     Button togglePollButton = null;
@@ -151,7 +151,7 @@ public class MainFragment extends Fragment {
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
         createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
         readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
-        getKeyCountButton = (Button) rootView.findViewById(R.id.getKeyCountButton);
+//        getKeyCountButton = (Button) rootView.findViewById(R.id.getKeyCountButton);
         lockOrUnlockButton = (Button) rootView.findViewById(R.id.lockOrUnlockButton);
         decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
         togglePollButton = (Button) rootView.findViewById(R.id.togglePollButton);

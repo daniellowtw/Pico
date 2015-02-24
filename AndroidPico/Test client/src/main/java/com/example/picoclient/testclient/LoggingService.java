@@ -44,8 +44,8 @@ public class LoggingService extends Service {
                 Bundle extras = intent.getExtras();
                 Log.d(TAG, "keys: " + extras.keySet());
                 ContentValues values = new ContentValues();
-                Long now = Long.valueOf(System.currentTimeMillis());
-                values.put("created_time", now);
+                values.put("poll_start_time", extras.getLong("poll_start_time"));
+                values.put("poll_end_time", extras.getLong("poll_end_time"));
                 values.put("poll_status", extras.getInt("poll_status"));
 
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
@@ -84,10 +84,12 @@ public class LoggingService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+
     @Override
     public void onDestroy() {
         super.onDestroy();
         unregisterReceiver(mIntentReceiver);
+        unregisterReceiver(stateLoggingReceiver);
     }
 
     public boolean insertBatteryData(ContentValues values) {

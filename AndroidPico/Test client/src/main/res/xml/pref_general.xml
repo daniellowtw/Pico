@@ -29,12 +29,12 @@
         android:dialogTitle="dialog title"
         android:entries="@array/pref_sync_frequency_titles"
         android:entryValues="@array/pref_sync_frequency_values"
-        android:defaultValue="15" />
+        android:defaultValue="5000" />
     <ListPreference
         android:key="pref_alive_interval"
         android:title="Time before app forgets key"
         android:dialogTitle="dialog title"
         android:entries="@array/pref_sync_frequency_titles"
         android:entryValues="@array/pref_sync_frequency_values"
-        android:defaultValue="30" />
+        android:defaultValue="15000" />
 </PreferenceScreen>

@@ -95,8 +95,12 @@ public class ServerAPIIntentService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             Log.i(TAG, "intent action is " + action);
+
+            String comments = action + '\n';
             Intent stateLoggingIntent=new Intent();
+            stateLoggingIntent.putExtra("poll_start_time", Long.valueOf(System.currentTimeMillis()));
             stateLoggingIntent.setAction(LoggingService.STATE_LOGGING_INTENT);
+
             try {
                 stateLoggingIntent.putExtra("poll_status", 1);
                 if (START_POLLING.equals(action)) {
@@ -119,6 +123,7 @@ public class ServerAPIIntentService extends IntentService {
                 incrementFailedCount();
                 showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
                 Log.e(TAG, e.getMessage());
+                comments.concat(e.getMessage() + "\n");
                 e.printStackTrace();
                 stateLoggingIntent.putExtra("poll_status", 0);
             }
@@ -126,8 +131,12 @@ public class ServerAPIIntentService extends IntentService {
                 stateLoggingIntent.putExtra("availability_status",1);
             }
             else{
+                comments.concat(prefs.toString());
                 stateLoggingIntent.putExtra("availability_status",0);
             }
+
+            stateLoggingIntent.putExtra("comments",comments);
+            stateLoggingIntent.putExtra("poll_end_time", Long.valueOf(System.currentTimeMillis()));
             sendBroadcast(stateLoggingIntent);
             Log.i("Broadcast", "sending broadcast");
         }

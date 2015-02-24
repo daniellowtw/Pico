@@ -12,7 +12,7 @@ class DBHelper extends SQLiteOpenHelper {
     static final String TAG = "DBHelper";
     static final String DATABASE_NAME = "datalog.db";
     static final int DATABASE_VERSION = 1;
-    static final String LEVELS_TABLE = "levels";
+    static final String LEVELS_TABLE = "power_levels";
     static final String STATES_TABLE = "states";
 
     DBHelper(Context context) {
@@ -30,10 +30,12 @@ class DBHelper extends SQLiteOpenHelper {
                 + "plugged INTEGER"
                 + ");");
         db.execSQL("CREATE TABLE " + STATES_TABLE + " ("
-                + "created_time INTEGER PRIMARY KEY,"
+                + "poll_start_time INTEGER,"
+                + "poll_end_time INTEGER,"
                 + "poll_status INTEGER,"
                 + "connectivity_status INTEGER,"
                 + "availability_status INTEGER"
+                + "comments TEXT DEFAULT ''"
                 + ");");
     }
 
