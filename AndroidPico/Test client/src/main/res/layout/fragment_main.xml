@@ -115,12 +115,42 @@
         android:layout_alignParentBottom="true" />
 
     <Button
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="Start temp function"
-    android:onClick="tempFunction"
-    android:id="@+id/tempButton"
-    android:layout_alignParentBottom="true" />
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View memory"
+        android:onClick="viewAppPref"
+        android:id="@+id/viewAppPrefButton"
+        android:layout_alignParentBottom="true" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Start BG service"
+            android:onClick="startBGService"
+            android:id="@+id/startServiceBtn"
+            android:layout_weight="1"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stop BG service"
+            android:onClick="stopBGService"
+            android:id="@+id/stopServiceBtn"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!--<Button-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Start temp function"-->
+        <!--android:onClick="tempFunction"-->
+        <!--android:id="@+id/tempButton"-->
+        <!--android:layout_alignParentBottom="true" />-->
 
     <TextView
         android:layout_width="match_parent"

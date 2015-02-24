@@ -95,8 +95,10 @@ public class ServerAPIIntentService extends IntentService {
         if (intent != null) {
             final String action = intent.getAction();
             Log.i(TAG, "intent action is " + action);
+            Intent stateLoggingIntent=new Intent();
+            stateLoggingIntent.setAction(LoggingService.STATE_LOGGING_INTENT);
             try {
-
+                stateLoggingIntent.putExtra("poll_status", 1);
                 if (START_POLLING.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleUnlockApp(uid);
@@ -118,7 +120,16 @@ public class ServerAPIIntentService extends IntentService {
                 showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
                 Log.e(TAG, e.getMessage());
                 e.printStackTrace();
+                stateLoggingIntent.putExtra("poll_status", 0);
             }
+            if (prefs.contains("secretKey")){
+                stateLoggingIntent.putExtra("availability_status",1);
+            }
+            else{
+                stateLoggingIntent.putExtra("availability_status",0);
+            }
+            sendBroadcast(stateLoggingIntent);
+            Log.i("Broadcast", "sending broadcast");
         }
     }
 

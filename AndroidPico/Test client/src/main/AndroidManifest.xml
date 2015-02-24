@@ -3,6 +3,7 @@
     package="com.example.picoclient.testclient" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -25,7 +26,10 @@
         <service
             android:name="com.example.picoclient.testclient.ServerAPIIntentService"
             android:exported="false" />
-
+        <service
+            android:name=".LoggingService"
+            android:label="My Service"
+            android:exported="false"/>
         <receiver
             android:name="com.example.picoclient.testclient.AlarmBroadcastReceiver"
             android:process=":remote" />

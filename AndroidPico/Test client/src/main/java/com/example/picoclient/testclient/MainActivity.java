@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.nfc.Tag;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
@@ -165,8 +166,19 @@ public class MainActivity extends ActionBarActivity {
         Log.i("ButtonPress", "Asking for Decryption key");
     }
 
-    public void tempFunction(View v) {
+
+    public void viewAppPref(View v) {
         Toast.makeText(this, appPref.getAll().toString(), Toast.LENGTH_LONG).show();
+    }
+
+    public void startBGService(View v) {
+        startService(new Intent(this, LoggingService.class));
+        Log.i("BG Service", "clicked on started bg service");
+    }
+
+    public void stopBGService(View v) {
+        stopService(new Intent(this, LoggingService.class));
+        Log.i("BG Service", "clicked on stopped bg service");
     }
 
     // This instance doesn't get destroyed after handling a broadcast
