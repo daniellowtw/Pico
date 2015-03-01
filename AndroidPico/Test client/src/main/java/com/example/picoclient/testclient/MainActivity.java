@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.nfc.Tag;
+import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
@@ -19,7 +20,12 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 public class MainActivity extends ActionBarActivity {
     // Actions this activity can do. To be used by intent service
@@ -179,6 +185,49 @@ public class MainActivity extends ActionBarActivity {
     public void stopBGService(View v) {
         stopService(new Intent(this, LoggingService.class));
         Log.i("BG Service", "clicked on stopped bg service");
+    }
+
+    public void exportDB(View v){
+        try {
+            File sd = Environment.getExternalStorageDirectory();
+            File data = Environment.getDataDirectory();
+
+            if (sd.canWrite()) {
+//                String currentDBPath = "//data//com.example.picoclient//databases//datalog.db";
+                String backupDBPath = "picoData3.db";
+//                File currentDB = new File(data, currentDBPath);
+                File currentDB = getDatabasePath(DBHelper.DATABASE_NAME);
+                File backupDB = new File(sd, backupDBPath);
+
+                if (currentDB.exists()) {
+                    FileChannel src = new FileInputStream(currentDB).getChannel();
+                    FileChannel dst = new FileOutputStream(backupDB).getChannel();
+                    dst.transferFrom(src, 0, src.size());
+                    src.close();
+                    dst.close();
+                }
+                Toast.makeText(getApplicationContext(), "Saved to sdcard as " + backupDBPath, Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Toast.makeText(getApplicationContext(), e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
+//            e.printStackTrace();
+        }
+//        File from = new File(Environment.get.getAbsolutePath()+"/kaic1/imagem.jpg");
+//        File to = new File(Environment.getExternalStorage().getAbsolutePath()+"/kaic2/imagem.jpg");
+
+//        FileChannel inChannel = new FileInputStream(src).getChannel();
+//        FileChannel outChannel = new FileOutputStream(dst).getChannel();
+//        try
+//        {
+//            inChannel.transferTo(0, inChannel.size(), outChannel);
+//        }
+//        finally
+//        {
+//            if (inChannel != null)
+//                inChannel.close();
+//            if (outChannel != null)
+//                outChannel.close();
+//        }
     }
 
     // This instance doesn't get destroyed after handling a broadcast
