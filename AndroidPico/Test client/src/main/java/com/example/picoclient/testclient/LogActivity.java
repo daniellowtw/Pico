@@ -10,6 +10,7 @@ import android.widget.TextView;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 // Might change this to a fragment in the future
 
@@ -19,31 +20,29 @@ SharedPreferences prefs;
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_log);
-
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        if (prefs.contains("successfulAttempts")){
-            TextView tv = (TextView)findViewById(R.id.successCounts);
-            tv.setText("Success count: " + Integer.toString(prefs.getInt("successfulAttempts", -1)));
-        }
-        if (prefs.contains("failedAttempts")){
-            Log.i("Cool", "continas failed stuff");
-            TextView tv = (TextView)findViewById(R.id.failedCounts);
-            tv.setText("Failure count: " + Integer.toString(prefs.getInt("failedAttempts", -1)));
-        }
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Log.i("Log", "onResume");
         try {
-            Process process = Runtime.getRuntime().exec("logcat -d *:E");
-            BufferedReader bufferedReader = new BufferedReader(
-                    new InputStreamReader(process.getInputStream()));
-
             StringBuilder log=new StringBuilder();
             String line = "";
-            while ((line = bufferedReader.readLine()) != null) {
-                log.append(line);
+            Map<String,?> allPref = prefs.getAll();
+            for (Map.Entry<String,?> e :allPref.entrySet()){
+                log.append(e.getKey());
+                log.append(": ");
+                log.append(e.getValue().toString());
+                log.append("\n");
             }
             TextView tv = (TextView)findViewById(R.id.textView1);
             tv.setText(log.toString());
         }
-        catch (IOException e) {}
+        catch (Exception e) {
+            Log.e("Log",e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 }

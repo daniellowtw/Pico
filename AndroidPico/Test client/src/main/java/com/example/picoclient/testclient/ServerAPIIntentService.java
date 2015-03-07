@@ -6,6 +6,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.TrafficStats;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
@@ -91,16 +92,15 @@ public class ServerAPIIntentService extends IntentService {
 
     @Override
     protected void onHandleIntent(Intent intent) {
-        Log.i(TAG, "intent received");
         if (intent != null) {
             final String action = intent.getAction();
             Log.i(TAG, "intent action is " + action);
-
             String comments = action + '\n';
             Intent stateLoggingIntent=new Intent();
             stateLoggingIntent.putExtra("poll_start_time", Long.valueOf(System.currentTimeMillis()));
             stateLoggingIntent.setAction(LoggingService.STATE_LOGGING_INTENT);
-
+            long startTrafficReceived = TrafficStats.getTotalRxBytes();
+            long startTrafficTransmitted = TrafficStats.getTotalTxBytes();
             try {
                 stateLoggingIntent.putExtra("poll_status", 1);
                 if (START_POLLING.equals(action)) {
@@ -123,7 +123,7 @@ public class ServerAPIIntentService extends IntentService {
                 incrementFailedCount();
                 showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
                 Log.e(TAG, e.getMessage());
-                comments.concat(e.getMessage() + "\n");
+                comments = comments + e.getMessage() + "\n";
                 e.printStackTrace();
                 stateLoggingIntent.putExtra("poll_status", 0);
             }
@@ -131,14 +131,19 @@ public class ServerAPIIntentService extends IntentService {
                 stateLoggingIntent.putExtra("availability_status",1);
             }
             else{
-                comments.concat(prefs.toString());
                 stateLoggingIntent.putExtra("availability_status",0);
             }
-
-            stateLoggingIntent.putExtra("comments",comments);
+            long finishTrafficReceived = TrafficStats.getTotalRxBytes();
+            long finishTrafficTransmitted = TrafficStats.getTotalTxBytes();
+            stateLoggingIntent.putExtra("comments", comments);
+            stateLoggingIntent.putExtra("traffic_received", startTrafficReceived == TrafficStats.UNSUPPORTED ? -1 : finishTrafficReceived - startTrafficReceived);
+            stateLoggingIntent.putExtra("traffic_transmitted", startTrafficReceived == TrafficStats.UNSUPPORTED ? -1 : finishTrafficTransmitted - startTrafficTransmitted);
             stateLoggingIntent.putExtra("poll_end_time", Long.valueOf(System.currentTimeMillis()));
             sendBroadcast(stateLoggingIntent);
             Log.i("Broadcast", "sending broadcast");
+        }
+        else{
+            Log.e(TAG, "null intent received");
         }
     }
 

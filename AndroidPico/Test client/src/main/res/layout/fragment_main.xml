@@ -1,95 +1,104 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    tools:context="com.example.picoclient.testclient.MainActivity$PlaceholderFragment"
-    android:orientation="vertical"
-    android:weightSum="1">
-
-    <RelativeLayout
-        android:orientation="vertical"
-        android:layout_width="fill_parent"
-        android:layout_height="140dp">
-
-
-        <TextView
-            android:text="@string/app_status"
-            android:layout_width="match_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/textStatus"
-            android:minWidth="@dimen/dialog_fixed_width_minor"
-            android:gravity="bottom|center"
-            style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
-            android:height="100px"
-            android:padding="10px"
-            android:textAlignment="center"
-            android:textIsSelectable="false"
-            android:textSize="@dimen/statusFontSize" />
-
-        <!--Depth is determined by order of code. We want the following to be on top-->
-        <TextView
-            style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
-            android:text="@string/secret"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/secret_key_text_view"
-            android:gravity="bottom|left"
-            android:textAlignment="center"
-            android:textIsSelectable="false"
-            android:textSize="@dimen/time_left_unlocked_fontsize"
-            android:typeface="sans" />
-
-        <TextView
-            android:text="@string/time_to_lock"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:id="@+id/text_time_left"
-            android:gravity="top|left"
-            style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
-            android:textAlignment="center"
-            android:textIsSelectable="false"
-            android:textSize="@dimen/time_left_unlocked_fontsize"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentStart="true" />
-
-    </RelativeLayout>
-
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="@dimen/abc_action_bar_default_height"
-        android:layout_below="@+id/textStatus"
-        android:text="Create file"
-        android:onClick="onCreateFile"
-        android:id="@+id/createFileButton"/>
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/scrollView"
+    android:scrollbars="vertical"
+    android:fillViewport="true"
+    android:layout_alignParentLeft="true"
+    android:layout_alignParentStart="true">
 
     <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        tools:context="com.example.picoclient.testclient.MainActivity$PlaceholderFragment"
+        android:orientation="vertical"
+        android:weightSum="1">
+
+        <RelativeLayout
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="140dp">
+
+
+            <TextView
+                android:text="@string/app_status"
+                android:layout_width="match_parent"
+                android:layout_height="fill_parent"
+                android:id="@+id/textStatus"
+                android:minWidth="@dimen/dialog_fixed_width_minor"
+                android:gravity="bottom|center"
+                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+                android:height="100px"
+                android:padding="10px"
+                android:textAlignment="center"
+                android:textIsSelectable="false"
+                android:textSize="@dimen/statusFontSize" />
+
+            <!--Depth is determined by order of code. We want the following to be on top-->
+            <TextView
+                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+                android:text="@string/secret"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/secret_key_text_view"
+                android:gravity="bottom|left"
+                android:textAlignment="center"
+                android:textIsSelectable="false"
+                android:textSize="@dimen/time_left_unlocked_fontsize"
+                android:typeface="sans" />
+
+            <TextView
+                android:text="@string/time_to_lock"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/text_time_left"
+                android:gravity="top|left"
+                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
+                android:textAlignment="center"
+                android:textIsSelectable="false"
+                android:textSize="@dimen/time_left_unlocked_fontsize"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true" />
+
+        </RelativeLayout>
 
         <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="View file"
-            android:onClick="onShowFile"
-            android:id="@+id/readFileButton"
-            android:layout_weight="1"/>
+            android:layout_width="fill_parent"
+            android:layout_height="@dimen/abc_action_bar_default_height"
+            android:layout_below="@+id/textStatus"
+            android:text="Create file"
+            android:onClick="onCreateFile"
+            android:id="@+id/createFileButton" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Decrypt file"
-            android:onClick="onDecrypt"
-            android:id="@+id/decryptFileButton"
-            android:layout_weight="1" />
-    </LinearLayout>
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
 
-    <!--<Button-->
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View file"
+                android:onClick="onShowFile"
+                android:id="@+id/readFileButton"
+                android:layout_weight="1" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Decrypt file"
+                android:onClick="onDecrypt"
+                android:id="@+id/decryptFileButton"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <!--<Button-->
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="wrap_content"-->
         <!--android:text="Get key count"-->
@@ -97,62 +106,71 @@
         <!--android:id="@+id/getKeyCountButton"-->
         <!--android:layout_alignParentBottom="true" />-->
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Lock app"
-        android:onClick="onLockOrUnlockApp"
-        android:id="@+id/lockOrUnlockButton"
-        android:layout_alignParentBottom="true" />
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lock app"
+            android:onClick="onLockOrUnlockApp"
+            android:id="@+id/lockOrUnlockButton"
+            android:layout_alignParentBottom="true" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
 
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start polling"
-        android:onClick="onTogglePolling"
-        android:id="@+id/togglePollButton"
-        android:layout_alignParentBottom="true" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start BG service"
+                android:onClick="toggleBGService"
+                android:id="@+id/toggleServiceBtn"
+                android:layout_weight="1" />
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="View memory"
-        android:onClick="viewAppPref"
-        android:id="@+id/viewAppPrefButton"
-        android:layout_alignParentBottom="true" />
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start polling"
+                android:onClick="onTogglePolling"
+                android:id="@+id/togglePollButton"
+                android:layout_weight="1" />
 
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
+        </LinearLayout>
 
         <Button
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Start BG service"
-            android:onClick="startBGService"
-            android:id="@+id/startServiceBtn"
-            android:layout_weight="1"/>
+            android:text="View memory"
+            android:onClick="viewAppPref"
+            android:id="@+id/viewAppPrefButton"
+            android:layout_alignParentBottom="true"
+            android:visibility="gone"/>
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Stop BG service"
-            android:onClick="stopBGService"
-            android:id="@+id/stopServiceBtn"
-            android:layout_weight="1" />
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Export DB to SDcard"
-            android:onClick="exportDB"
-            android:id="@+id/exportDBBtn"
-            android:layout_weight="1"/>
-    </LinearLayout>
 
-    <!--<Button-->
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Upload DB"
+                android:onClick="stopBGService"
+                android:id="@+id/stopServiceBtn"
+                android:layout_weight="1" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Export DB to SDcard"
+                android:onClick="exportDB"
+                android:id="@+id/exportDBBtn"
+                android:layout_weight="1" android:visibility="gone" />
+        </LinearLayout>
+
+        <!--<Button-->
         <!--android:layout_width="match_parent"-->
         <!--android:layout_height="wrap_content"-->
         <!--android:text="Start temp function"-->
@@ -160,18 +178,21 @@
         <!--android:id="@+id/tempButton"-->
         <!--android:layout_alignParentBottom="true" />-->
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceLarge"
-        android:id="@+id/lastLog"
-        android:layout_gravity="center_horizontal" />
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:id="@+id/lastLog"
+            android:layout_gravity="center_horizontal" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textAppearance="?android:attr/textAppearanceSmall"
-        android:text="Version number"
-        android:id="@+id/versionTextView" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:text="Version number"
+            android:id="@+id/versionTextView" />
 
-</LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>

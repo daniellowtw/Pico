@@ -32,10 +32,10 @@ import javax.crypto.BadPaddingException;
 public class MainFragment extends Fragment {
     Button createFileButton = null;
     Button readFileButton = null;
-//    Button getKeyCountButton = null;
     Button lockOrUnlockButton = null;
     Button decryptFileButton = null;
     Button togglePollButton = null;
+    Button toggleServiceBtn = null;
     TextView lastLog = null;
     TextView statusTextView;
     TextView secretKeyTV;
@@ -151,18 +151,20 @@ public class MainFragment extends Fragment {
         statusTextView = (TextView) rootView.findViewById(R.id.textStatus);
         createFileButton = (Button) rootView.findViewById(R.id.createFileButton);
         readFileButton = (Button) rootView.findViewById(R.id.readFileButton);
-//        getKeyCountButton = (Button) rootView.findViewById(R.id.getKeyCountButton);
         lockOrUnlockButton = (Button) rootView.findViewById(R.id.lockOrUnlockButton);
         decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
         togglePollButton = (Button) rootView.findViewById(R.id.togglePollButton);
+        toggleServiceBtn = (Button) rootView.findViewById(R.id.toggleServiceBtn);
         lastLog = (TextView) rootView.findViewById(R.id.lastLog);
         secretKeyTV = (TextView) rootView.findViewById(R.id.secret_key_text_view);
         Log.v(this.getClass().getSimpleName(), "onCreateView called");
         if (prefs == null) {
             prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         }
-        int toggleButtonText = prefs.getBoolean("isPolling", false) ? R.string.stop_polling : R.string.start_polling;
-        togglePollButton.setText(toggleButtonText);
+        int isPollingStringID = prefs.getBoolean("isPolling", false) ? R.string.stop_polling : R.string.start_polling;
+        togglePollButton.setText(isPollingStringID);
+        int isServiceActiveStringID = prefs.getBoolean("isServiceActive", false) ? R.string.stop_bg_service : R.string.start_bg_service;
+        toggleServiceBtn.setText(isServiceActiveStringID);
 
         if (prefs.contains("secretKey")) {
             lockOrUnlockButton.setText(R.string.lock_app);

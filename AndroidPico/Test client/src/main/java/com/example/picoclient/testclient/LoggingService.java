@@ -9,9 +9,19 @@ import android.content.IntentFilter;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.AsyncTask;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.widget.Toast;
+
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class LoggingService extends Service {
     public static final String STATE_LOGGING_INTENT = "Stage logging";
@@ -19,39 +29,49 @@ public class LoggingService extends Service {
     BroadcastReceiver mIntentReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(android.content.Intent.ACTION_BATTERY_CHANGED)) {
-                Log.d(TAG, "ACTION_BATTERY_CHANGED");
                 Bundle extras = intent.getExtras();
-                Log.d(TAG, "keys: " + extras.keySet());
                 ContentValues values = new ContentValues();
                 Long now = Long.valueOf(System.currentTimeMillis());
                 values.put("sampletime", now);
-                values.put("level", extras.getInt("level"));
-                values.put("voltage", extras.getInt("voltage"));
-                values.put("temperature", extras.getInt("temperature"));
-                values.put("plugged", extras.getInt("plugged"));
+                values.put("level", extras.getInt(BatteryManager.EXTRA_LEVEL));
+                values.put("scale", extras.getInt(BatteryManager.EXTRA_SCALE));
+                values.put("voltage", extras.getInt(BatteryManager.EXTRA_VOLTAGE));
+                values.put("temperature", extras.getInt(BatteryManager.EXTRA_TEMPERATURE));
+                values.put("plugged", extras.getInt(BatteryManager.EXTRA_PLUGGED));
+                values.put("health", extras.getInt(BatteryManager.EXTRA_HEALTH));
                 insertBatteryData(values);
-                // if we're not charging
-                if (extras.getInt("plugged") != 2) {
-//                    warnUser(extras.getInt("level"));
-                }
             }
         }
     };
     BroadcastReceiver stateLoggingReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(STATE_LOGGING_INTENT)) {
-                Log.d(TAG, "STATE_LOGGING_INTENT received");
                 Bundle extras = intent.getExtras();
-                Log.d(TAG, "keys: " + extras.keySet());
                 ContentValues values = new ContentValues();
                 values.put("poll_start_time", extras.getLong("poll_start_time"));
                 values.put("poll_end_time", extras.getLong("poll_end_time"));
+                values.put("comments", extras.getString("comments"));
+//                Whether the poll succeeded or not
                 values.put("poll_status", extras.getInt("poll_status"));
+//                Whether we have the secret share
+                values.put("availability_status", extras.getInt("availability_status"));
+                values.put("traffic_received", extras.getLong("traffic_received"));
+                values.put("traffic_transmitted", extras.getLong("traffic_transmitted"));
 
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-                boolean isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-                values.put("connectivity_status", isConnected? 1:0);
-                values.put("availability_status", extras.getInt("availability_status"));
+//                Might be null if we're not connected
+                if (activeNetwork!=null){
+                    values.put("network_connectivity", activeNetwork.isConnected()?1:0);
+                    values.put("network_availability", activeNetwork.isAvailable()?1:0);
+                    values.put("network_type", activeNetwork.getTypeName());
+                    values.put("network_subtype", activeNetwork.getSubtypeName());
+                    values.put("network_extra_info", activeNetwork.getExtraInfo());
+                }
+                else{
+                    // No network
+                    values.put("network_connectivity", 0);
+                    values.put("network_availability", 0);
+                }
                 insertStateData(values);
             }
         }

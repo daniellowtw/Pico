@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.nfc.Tag;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -17,7 +16,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -40,35 +38,35 @@ public class MainActivity extends ActionBarActivity {
     private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
-    @Override
-    protected void onDestroy() {
-        Log.i(this.getClass().getSimpleName(), "onDestroy called");
-        super.onDestroy();
-    }
-
-    @Override
-    protected void onStop() {
-        Log.i(this.getClass().getSimpleName(), "onStop called");
-        super.onStop();
-    }
-
-    @Override
-    protected void onRestart() {
-        Log.i(this.getClass().getSimpleName(), "onRestart called");
-        super.onRestart();
-    }
-
-    @Override
-    protected void onStart() {
-        Log.v(this.getClass().getSimpleName(), "onStart called ");
-        super.onStart();
-    }
-
-    @Override
-    protected void onResume() {
-        Log.v(this.getClass().getSimpleName(), "onStop called");
-        super.onResume();
-    }
+//    @Override
+//    protected void onDestroy() {
+//        Log.i(this.getClass().getSimpleName(), "onDestroy called");
+//        super.onDestroy();
+//    }
+//
+//    @Override
+//    protected void onStop() {
+//        Log.i(this.getClass().getSimpleName(), "onStop called");
+//        super.onStop();
+//    }
+//
+//    @Override
+//    protected void onRestart() {
+//        Log.i(this.getClass().getSimpleName(), "onRestart called");
+//        super.onRestart();
+//    }
+//
+//    @Override
+//    protected void onStart() {
+//        Log.v(this.getClass().getSimpleName(), "onStart called ");
+//        super.onStart();
+//    }
+//
+//    @Override
+//    protected void onResume() {
+//        Log.v(this.getClass().getSimpleName(), "onStop called");
+//        super.onResume();
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +74,7 @@ public class MainActivity extends ActionBarActivity {
         alarmBroadcastReceiver = new AlarmBroadcastReceiver();
         //The following preference can only be accessed by the activity.
         appPref = PreferenceManager.getDefaultSharedPreferences(this);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_general, false);
         mainFragment = new MainFragment();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -86,7 +85,6 @@ public class MainActivity extends ActionBarActivity {
                     .commit();
         } else {
             Log.i(this.getClass().getSimpleName(), "Saved state");
-            Log.i("a", savedInstanceState.toString());
         }
         uid = Settings.Secure.getString(getApplicationContext().getContentResolver(), Settings.Secure.ANDROID_ID);
         ResponseReceiver responseReceiver = new ResponseReceiver();
@@ -177,17 +175,30 @@ public class MainActivity extends ActionBarActivity {
         Toast.makeText(this, appPref.getAll().toString(), Toast.LENGTH_LONG).show();
     }
 
-    public void startBGService(View v) {
-        startService(new Intent(this, LoggingService.class));
-        Log.i("BG Service", "clicked on started bg service");
+    public void toggleBGService(View v) {
+        Button tempTestButton = (Button) findViewById(R.id.toggleServiceBtn);
+        Log.i("Listener", "Toggle Polling");
+        if (!appPref.getBoolean("isServiceActive", false)) {
+            // Start polling
+            startService(new Intent(this, LoggingService.class));
+            Log.i("BG Service", "clicked on started bg service");
+            tempTestButton.setText("Stop BG service");
+            appPref.edit().putBoolean("isServiceActive", true).commit();
+        } else {
+            // Start polling
+            stopService(new Intent(this, LoggingService.class));
+            Log.i("BG Service", "clicked on stopped bg service");
+            tempTestButton.setText("Start BG service");
+            appPref.edit().putBoolean("isServiceActive", false).commit();
+        }
     }
 
     public void stopBGService(View v) {
-        stopService(new Intent(this, LoggingService.class));
-        Log.i("BG Service", "clicked on stopped bg service");
+        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext());
+        asyncTask.execute(getDatabasePath(DBHelper.DATABASE_NAME));
     }
 
-    public void exportDB(View v){
+    public void exportDB(View v) {
         try {
             File sd = Environment.getExternalStorageDirectory();
             File data = Environment.getDataDirectory();
