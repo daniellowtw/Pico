@@ -121,7 +121,7 @@ public class ServerAPIIntentService extends IntentService {
                 }
             } catch (IOException e) {
                 incrementFailedCount();
-                showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
+//                showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
                 Log.e(TAG, e.getMessage());
                 comments = comments + e.getMessage() + "\n";
                 e.printStackTrace();
@@ -159,7 +159,6 @@ public class ServerAPIIntentService extends IntentService {
     private void handleGetKeyCount(String uid) throws IOException {
         String messageToSend = "key]" + uid;
         String result = sendStringToServer(messageToSend);
-        showNotification("KeyCount", result, true);
         Intent localIntent =
                 new Intent(MainActivity.NOTIFY_USER)
                         .putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
@@ -183,7 +182,7 @@ public class ServerAPIIntentService extends IntentService {
         String messageToSend = "get]" + uid;
         String key = sendStringToServer(messageToSend);
         if (key.isEmpty()) {
-            showNotification("Error: revoked/missing key", "Key is not found on server", false);
+//            showNotification("Error: revoked/missing key", "Key is not found on server", false);
         } else {
             incrementSuccessCount();
             prefs.edit().putString("secretKey", key).commit();

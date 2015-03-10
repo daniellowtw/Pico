@@ -16,6 +16,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -56,11 +58,13 @@ public class MainActivity extends ActionBarActivity {
 //        super.onRestart();
 //    }
 //
-//    @Override
-//    protected void onStart() {
-//        Log.v(this.getClass().getSimpleName(), "onStart called ");
-//        super.onStart();
-//    }
+    @Override
+    protected void onStart() {
+        Log.v(this.getClass().getSimpleName(), "onStart called ");
+        super.onStart();
+        ((ProgressBar)findViewById(R.id.uploadProgressBar)).setVisibility(View.GONE);
+        ((TextView)findViewById(R.id.uploadProgressText)).setVisibility(View.GONE);
+    }
 //
 //    @Override
 //    protected void onResume() {
@@ -193,20 +197,16 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public void stopBGService(View v) {
-        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext());
+    public void uploadDB(View v) {
+        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext(), findViewById(R.id.uploadProgressBar), findViewById(R.id.uploadProgressText));
         asyncTask.execute(getDatabasePath(DBHelper.DATABASE_NAME));
     }
 
     public void exportDB(View v) {
         try {
             File sd = Environment.getExternalStorageDirectory();
-            File data = Environment.getDataDirectory();
-
             if (sd.canWrite()) {
-//                String currentDBPath = "//data//com.example.picoclient//databases//datalog.db";
-                String backupDBPath = "picoData3.db";
-//                File currentDB = new File(data, currentDBPath);
+                String backupDBPath = "picoData.db";
                 File currentDB = getDatabasePath(DBHelper.DATABASE_NAME);
                 File backupDB = new File(sd, backupDBPath);
 
@@ -221,24 +221,7 @@ public class MainActivity extends ActionBarActivity {
             }
         } catch (IOException e) {
             Toast.makeText(getApplicationContext(), e.getLocalizedMessage(), Toast.LENGTH_SHORT).show();
-//            e.printStackTrace();
         }
-//        File from = new File(Environment.get.getAbsolutePath()+"/kaic1/imagem.jpg");
-//        File to = new File(Environment.getExternalStorage().getAbsolutePath()+"/kaic2/imagem.jpg");
-
-//        FileChannel inChannel = new FileInputStream(src).getChannel();
-//        FileChannel outChannel = new FileOutputStream(dst).getChannel();
-//        try
-//        {
-//            inChannel.transferTo(0, inChannel.size(), outChannel);
-//        }
-//        finally
-//        {
-//            if (inChannel != null)
-//                inChannel.close();
-//            if (outChannel != null)
-//                outChannel.close();
-//        }
     }
 
     // This instance doesn't get destroyed after handling a broadcast

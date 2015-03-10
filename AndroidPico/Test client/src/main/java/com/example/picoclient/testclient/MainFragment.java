@@ -155,7 +155,6 @@ public class MainFragment extends Fragment {
         decryptFileButton = (Button) rootView.findViewById(R.id.decryptFileButton);
         togglePollButton = (Button) rootView.findViewById(R.id.togglePollButton);
         toggleServiceBtn = (Button) rootView.findViewById(R.id.toggleServiceBtn);
-        lastLog = (TextView) rootView.findViewById(R.id.lastLog);
         secretKeyTV = (TextView) rootView.findViewById(R.id.secret_key_text_view);
         Log.v(this.getClass().getSimpleName(), "onCreateView called");
         if (prefs == null) {

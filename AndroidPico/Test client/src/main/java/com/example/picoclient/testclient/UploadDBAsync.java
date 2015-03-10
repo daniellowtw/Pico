@@ -1,9 +1,13 @@
 package com.example.picoclient.testclient;
 
+import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -18,12 +22,29 @@ import java.net.URL;
 /**
  * Created by Daniel on 07/03/2015.
  */
-public class UploadDBAsync extends AsyncTask<File, Void, String> {
+public class UploadDBAsync extends AsyncTask<File, Long, String> {
     Context ctx = null;
+    ProgressBar uploadProgressBar;
+    TextView uploadProgressText;
 
-    public UploadDBAsync(Context c) {
+    public UploadDBAsync(Context c, View a, View progressTextView) {
         super();
         ctx = c;
+        uploadProgressBar = (ProgressBar) a;
+        uploadProgressText = (TextView) progressTextView;
+    }
+
+    protected void onPreExecute() {
+        uploadProgressBar.setVisibility(View.VISIBLE);
+        uploadProgressText.setVisibility(View.VISIBLE);
+        uploadProgressBar.setProgress(0);
+    }
+
+    @Override
+    protected void onProgressUpdate(Long... progress) {
+        super.onProgressUpdate(progress);
+        uploadProgressText.setText(progress[0] + "/" + progress[1]);
+        uploadProgressBar.setProgress((int) (progress[0]*100/progress[1]));
     }
 
     @Override
@@ -67,8 +88,11 @@ public class UploadDBAsync extends AsyncTask<File, Void, String> {
                 buffer = new byte[bufferSize];
 
                 // read file and write it into form...
+                long total = 0;
                 bytesRead = fileInputStream.read(buffer, 0, bufferSize);
                 while (bytesRead > 0) {
+                    total += bytesRead;
+                    publishProgress(total, sourceFile.length());
                     dos.write(buffer, 0, bufferSize);
                     bytesAvailable = fileInputStream.available();
                     bufferSize = Math.min(bytesAvailable, maxBufferSize);
@@ -101,7 +125,7 @@ public class UploadDBAsync extends AsyncTask<File, Void, String> {
             }
             return "Error uploading.";
 
-        } // End else block
+        }
 
     }
 

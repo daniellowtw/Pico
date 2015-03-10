@@ -26,14 +26,14 @@
     <ListPreference
         android:key="pref_interval"
         android:title="Poll Interval"
-        android:dialogTitle="dialog title"
+        android:dialogTitle="Poll Interval"
         android:entries="@array/pref_sync_frequency_titles"
         android:entryValues="@array/pref_sync_frequency_values"
         android:defaultValue="5000" />
     <ListPreference
         android:key="pref_alive_interval"
         android:title="Time before app forgets key"
-        android:dialogTitle="dialog title"
+        android:dialogTitle="Time before app forgets key"
         android:entries="@array/pref_sync_frequency_titles"
         android:entryValues="@array/pref_sync_frequency_values"
         android:defaultValue="15000" />
