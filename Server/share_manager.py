@@ -3,7 +3,7 @@ import Share
 import pprint as pp
 import logging
 
-logging.basicConfig(filename='example.log', level=logging.DEBUG)
+logging.basicConfig(filename='share_manager.log', level=logging.DEBUG)
 
 
 class ShareManager:
@@ -50,7 +50,7 @@ class ShareManager:
 
     def __init__(self, filename='pico_share.db'):
         try:
-            logging.info("trying to load" + filename)
+            logging.info("trying to load " + filename)
             self._loaded_database = pickle.load(open(filename, 'rb'))
             print "loaded db"
         # no file was loaded, so create new

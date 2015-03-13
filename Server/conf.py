@@ -7,7 +7,7 @@ Just a file with parameters for the server to use.
 """
 
 # dev config
-LOG_FILE = 'log.log'
+LOG_FILE = 'python_server.log'
 CURRENT_STATE = 'dev'
 WEB_PORT = 1235
 CLIENT_PORT_SSL = 8001

@@ -15,15 +15,15 @@ class ShareServer(Protocol):
     # Welcome message. To check that we have indeed connected to the server.
     # To remove in future
     def connectionMade(self):
-        log.msg('connectionMade')
+#        log.msg('connectionMade')
         self.transport.write("Welcome to pico\r\n")
 
     def dataReceived(self, data):
-        log.msg('data received', data)
+#        log.msg('data received', data)
         data = data.strip().split(']')
         if data[0] == "key":
             # key is in data[1]
-            log.msg('key asked', data[1])
+#            log.msg('key asked', data[1])
             share = self._share_manager.get_share(data[1])
             if (share != None):
                 # key is in db
@@ -52,7 +52,8 @@ class ShareServer(Protocol):
         self.transport.loseConnection()
 
     def connectionLost(self, reason):
-        log.msg('connectionLost', reason)
+#        log.msg('connectionLost', reason)
+        pass
 
 
 class ShareServerFactory(Factory):

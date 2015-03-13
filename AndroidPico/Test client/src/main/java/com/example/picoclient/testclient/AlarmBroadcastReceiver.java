@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
@@ -50,7 +51,12 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         i.setAction(LOCKING_ALARM_ACTION);
         PendingIntent pi = PendingIntent.getBroadcast(context, LOCKING_ALARM, i, PendingIntent.FLAG_UPDATE_CURRENT);
         String interval = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_alive_interval", "0");
-        am.setExact(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after pref_alive_interval sec
+        if (Build.VERSION.SDK_INT <19) {
+            am.set(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after pref_alive_interval sec
+        }
+        else{
+            am.setExact(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after pref_alive_interval sec
+        }
         Log.i("ALARM", "Locking alarm set");
     }
 
