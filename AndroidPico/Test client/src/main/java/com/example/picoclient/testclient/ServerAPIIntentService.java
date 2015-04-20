@@ -94,19 +94,20 @@ public class ServerAPIIntentService extends IntentService {
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
-            Log.i(TAG, "intent action is " + action);
+//            Log.i(TAG, "intent action is " + action);
             String comments = action + '\n';
-            Intent stateLoggingIntent=new Intent();
+            Intent stateLoggingIntent = new Intent();
             stateLoggingIntent.putExtra("poll_start_time", Long.valueOf(System.currentTimeMillis()));
             stateLoggingIntent.setAction(LoggingService.STATE_LOGGING_INTENT);
             long startTrafficReceived = TrafficStats.getTotalRxBytes();
             long startTrafficTransmitted = TrafficStats.getTotalTxBytes();
             try {
                 stateLoggingIntent.putExtra("poll_status", 1);
-                if (START_POLLING.equals(action)) {
-                    final String uid = intent.getStringExtra(UID);
-                    handleUnlockApp(uid);
-                } else if (GET_COUNT.equals(action)) {
+//                if (START_POLLING.equals(action)) {
+//                    final String uid = intent.getStringExtra(UID);
+//                    handleUnlockApp(uid);
+//                } else
+                if (GET_COUNT.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleGetKeyCount(uid);
                 } else if (UNLOCK_APP.equals(action)) {
@@ -127,11 +128,10 @@ public class ServerAPIIntentService extends IntentService {
                 e.printStackTrace();
                 stateLoggingIntent.putExtra("poll_status", 0);
             }
-            if (prefs.contains("secretKey")){
-                stateLoggingIntent.putExtra("availability_status",1);
-            }
-            else{
-                stateLoggingIntent.putExtra("availability_status",0);
+            if (prefs.contains("secretKey")) {
+                stateLoggingIntent.putExtra("availability_status", 1);
+            } else {
+                stateLoggingIntent.putExtra("availability_status", 0);
             }
             long finishTrafficReceived = TrafficStats.getTotalRxBytes();
             long finishTrafficTransmitted = TrafficStats.getTotalTxBytes();
@@ -141,8 +141,7 @@ public class ServerAPIIntentService extends IntentService {
             stateLoggingIntent.putExtra("poll_end_time", Long.valueOf(System.currentTimeMillis()));
             sendBroadcast(stateLoggingIntent);
             Log.i("Broadcast", "sending broadcast");
-        }
-        else{
+        } else {
             Log.e(TAG, "null intent received");
         }
     }
@@ -199,7 +198,7 @@ public class ServerAPIIntentService extends IntentService {
         try {
             String serverAddr = prefs.getString("pref_sync_addr", "dlow.me");
             int serverPort = Integer.parseInt(prefs.getString("pref_sync_port", "8001"));
-            InetSocketAddress addr = new InetSocketAddress(serverAddr , serverPort);
+            InetSocketAddress addr = new InetSocketAddress(serverAddr, serverPort);
             Socket ss = NaiveSocketFactory.getSocketFactory().createSocket();
             ss.connect(addr, 1000);
             BufferedReader br = new BufferedReader(new InputStreamReader(ss.getInputStream()));

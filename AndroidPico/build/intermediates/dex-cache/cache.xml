@@ -9,11 +9,11 @@
         <dex dex="C:\Users\Daniel\Pico\AndroidPico\Test client\build\intermediates\pre-dexed\debug\classes-a0f214428915d4ae005e0f79c9fcb3a3963e3b7a.jar" />
     </item>
     <item
-        jar="C:\Users\Daniel\Softwares\sdk\extras\android\m2repository\com\android\support\support-v4\19.1.0\support-v4-19.1.0.jar"
+        jar="C:\Users\Daniel\lib\sdk\extras\android\m2repository\com\android\support\support-v4\19.1.0\support-v4-19.1.0.jar"
         jumboMode="false"
         revision="19.1.0"
         sha1="85f201b380937e61a9dce6ca90ccf6872abbfb67">
-        <dex dex="C:\Users\Daniel\Pico\AndroidPico\Test client\build\intermediates\pre-dexed\debug\support-v4-19.1.0-9e225addef83fd81d81a352b6f196e31dbe1acca.jar" />
+        <dex dex="C:\Users\Daniel\Pico\AndroidPico\Test client\build\intermediates\pre-dexed\debug\support-v4-19.1.0-91df46d38ca125f065f8778dbdd814e14528d13e.jar" />
     </item>
 
 </items>
