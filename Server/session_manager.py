@@ -45,12 +45,13 @@ class SessionManager:
 
     def verify_otp_response(self, challenge, response):
         """Verify the challenge and response. If it matches, the temporary key
-        is returned and the session is deleted
+        is returned and the session is deleted otherwise return None
         """
-        if (self._sessions[challenge]):
-            if self._sessions[challenge].has_key('response'):
-                return self._sessions[challenge]['response'] == response
-        return False
+        if (self._sessions[challenge] and
+                self._sessions[challenge].has_key('response') and
+                self._sessions[challenge]['response'] == response):
+            return self._sessions[challenge]['key']
+        return None
 
     def clean_up(self):
         for session_id in self._sessions:
