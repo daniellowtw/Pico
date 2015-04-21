@@ -39,6 +39,7 @@ class ShareManager:
             id = self._pico_lookup[rev_key]
             del self._loaded_database[id]
             del self._pico_lookup[rev_key]
+            self.save_db()
             return True
         else:
             return False
