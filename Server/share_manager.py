@@ -34,6 +34,15 @@ class ShareManager:
         else:
             logging.error("trying to delete a share that does not exist")
 
+    def revoke_share(self, rev_key):
+        if self._pico_lookup.has_key(rev_key):
+            id = self._pico_lookup[rev_key]
+            del self._loaded_database[id]
+            del self._pico_lookup[rev_key]
+            return True
+        else:
+            return False
+
     def get_database(self):
         return self._loaded_database
         
@@ -57,7 +66,7 @@ class ShareManager:
             if not share.get_rev():
                 rev_key = base64.b64encode(os.urandom(32))
                 share.set_rev(rev_key)
-                _pico_lookup[rev_key] = share
+                self._pico_lookup[rev_key] = id
                 self.save_db()
                 return rev_key
             else:
@@ -79,7 +88,7 @@ class ShareManager:
         """Tries to load db from file. Might throw exception"""
         combined_database = pickle.load(open(filename, 'rb'))
         self._loaded_database = combined_database['loaded_db']
-        self._pico_loopup = combined_database['pico_lookup']
+        self._pico_lookup = combined_database['pico_lookup']
 
     def __str__(self):
         res = ""

@@ -193,14 +193,15 @@ public class ServerAPIIntentService extends IntentService {
     }
 
     private void handleRequestRevKey(String uid, String response) throws IOException {
-        String messageToSend = "request]" + uid + response;
+        String messageToSend = "request]" + uid + "]" + response;
         String key = sendStringToServer(messageToSend);
+        Intent localIntent = new Intent(MainActivity.NOTIFY_USER_ALERT);
         if (!key.isEmpty()) {
             // tell mainactivity to update UI
-            Intent localIntent = new Intent(MainActivity.NOTIFY_USER_ALERT);
             localIntent.putExtra(MainActivity.NOTIFY_USER_MESSAGE, key);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
         }
+        localIntent.putExtra(MainActivity.NOTIFY_USER_MESSAGE, key);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
     }
 
     private void handleUnlockApp(String uid) throws IOException {
@@ -235,6 +236,9 @@ public class ServerAPIIntentService extends IntentService {
             out.flush();
             String res = br.readLine();
             Log.i(TAG, "received string is " + res);
+            if (res == null){
+                return "No response from server";
+            }
             return res;
         } catch (UnknownHostException e) {
             throw e;

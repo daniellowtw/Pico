@@ -10,6 +10,7 @@ import os
 
 
 class ShareServer(Protocol):
+
     """This method is the logic behind what happens when we have a transport 
     channel between the Pico application and the server and when a message 
     is received.
@@ -34,7 +35,7 @@ class ShareServer(Protocol):
             # key is in data[1]
             log.msg('key asked', data[1])
             share = self._share_manager.get_share(data[1])
-            if (share != None):
+            if (share):
                 # key is in db
                 self.transport.write("secret key has been asked " +
                                      str(share.get_count()) + " times.\r\n")
@@ -56,15 +57,16 @@ class ShareServer(Protocol):
             # data is of form add]index]key
             self._share_manager.add_share(data[1], data[2])
             self.transport.write("secret key stored")
-        elif data[0] == "request":
+        elif data[0] == "request" and data[2].isdigit():
             session_id = int(data[2])
             # data is of the form request]id]otp_challenge
             if self._active_sessions.is_session_valid(session_id):
                 key = self._share_manager.create_revocation_key(data[1])
                 if (key):
-                    otp_response = int(os.urandom(2).encode('hex'),16)
-                    if (self._active_sessions.add_otp_response(session_id, 
-                                                        otp_response, key)):
+                    otp_response = int(os.urandom(2).encode('hex'), 16)
+                    if (self._active_sessions.add_otp_response_and_key(
+                            session_id,
+                            otp_response, key)):
                         self.transport.write("%05d" % otp_response)
                     else:
                         self.transport.write("Error")
@@ -81,6 +83,7 @@ class ShareServer(Protocol):
 
 
 class ShareServerFactory(Factory):
+
     """A factory that creates instances of the ShareServerProtocol
     This also keeps track of shared references of ShareManager and Sessions
     among the instances.

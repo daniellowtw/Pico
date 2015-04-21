@@ -28,7 +28,7 @@ class SharedValueRes(Resource):
         self.index = index
 
     def render_GET(self, request):
-        return str(_share_manager_global.get(self.index))
+        return str(self._share_manager.get(self.index))
 
 # For dev only
 
@@ -46,13 +46,11 @@ class DeleteKey(MyResourceWrapper):
     """A class representing the page that handles the deletion of Pico data"""
 
     def render_POST(self, request):
-        share_id = request.args["id"][0]
-        if self._share_manager.get_share(share_id) == None:
-            return "Error, key is not valid."
-        else:
-            rev_key = request.args["revKey"]
-            self._share_manager.delete_share(share_id, rev_key)
+        revocation_key = request.args["revKey"][0]
+        if self._share_manager.revoke_share(revocation_key):
             return "Key removed successfully."
+        else:
+            return "Error, key is not valid."
 
 
 class RequestRevKey(MyResourceWrapper):
