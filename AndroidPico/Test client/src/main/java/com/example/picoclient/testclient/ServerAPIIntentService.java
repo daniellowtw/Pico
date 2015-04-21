@@ -207,7 +207,7 @@ public class ServerAPIIntentService extends IntentService {
     private void handleUnlockApp(String uid) throws IOException {
         String messageToSend = "get]" + uid;
         String key = sendStringToServer(messageToSend);
-        if (key.isEmpty()) {
+        if (key.isEmpty() || key.startsWith("Revoked")) {
 //            showNotification("Error: revoked/missing key", "Key is not found on server", false);
         } else {
             incrementSuccessCount();

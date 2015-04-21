@@ -50,7 +50,9 @@ class SessionManager:
         if (self._sessions[challenge] and
                 self._sessions[challenge].has_key('response') and
                 self._sessions[challenge]['response'] == response):
-            return self._sessions[challenge]['key']
+            key = self._sessions[challenge]['key']
+            del self._sessions[challenge]
+            return key
         return None
 
     def clean_up(self):
