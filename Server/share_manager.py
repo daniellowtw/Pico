@@ -2,20 +2,24 @@ import pickle
 import Share
 import pprint as pp
 import logging
+import base64
+import os
 
 logging.basicConfig(filename='example.log', level=logging.DEBUG)
 
-
 class ShareManager:
     _loaded_database = None
+    _pico_lookup = None
 
     # Create sample data
     def create_new_db_file(self):
+        """Create the necessary database files and preload a default share"""
         logging.info("create new db called")
         temp_db_object = {}
-        sample1 = Share.Share("asdf")
-        temp_db_object["demo"] = sample1
+        sample = Share.Share("The demo secret")
+        temp_db_object["demo"] = sample
         self._loaded_database = temp_db_object
+        self._pico_lookup = {}
         self.save_db()
 
     def add_share(self, id, key):
@@ -32,7 +36,35 @@ class ShareManager:
 
     def get_database(self):
         return self._loaded_database
-
+        
+    def get_revocation_key(self, id):
+        """Retrieve the revocation key of the given Pico ID.
+        """
+        share = self.get_share(id)
+        if share:
+            return share.get_rev()
+        else:
+            return None
+        
+        
+    def create_revocation_key(self, id):
+        """If the user authenticates the request from the web UI and a
+        revocation key is not yet associated with this id, create one and
+        return the OTP challenge response.
+        """
+        share = self.get_share(id)
+        if share:
+            if not share.get_rev():
+                rev_key = base64.b64encode(os.urandom(32))
+                share.set_rev(rev_key)
+                _pico_lookup[rev_key] = share
+                self.save_db()
+                return rev_key
+            else:
+                return None
+        else:
+            return None
+                
     def get_share(self, id):
         if (self._loaded_database.has_key(id)):
             return self._loaded_database.get(id)
@@ -40,7 +72,14 @@ class ShareManager:
             return None
 
     def save_db(self):
-        pickle.dump(self._loaded_database, open('pico_share.db', 'wb'))
+        combined_database = {'loaded_db':self._loaded_database, 'pico_lookup':self._pico_lookup}
+        pickle.dump(combined_database, open(self._filename, 'wb'))
+        
+    def load_db(self, filename):
+        """Tries to load db from file. Might throw exception"""
+        combined_database = pickle.load(open(filename, 'rb'))
+        self._loaded_database = combined_database['loaded_db']
+        self._pico_loopup = combined_database['pico_lookup']
 
     def __str__(self):
         res = ""
@@ -48,10 +87,11 @@ class ShareManager:
             res += (str(index) + "\n\n" + str(share) + "\n\n\n")
         return res
 
-    def __init__(self, filename='pico_share.db'):
+    def __init__(self, filename):
+        self._filename = filename
         try:
             logging.info("trying to load" + filename)
-            self._loaded_database = pickle.load(open(filename, 'rb'))
+            self.load_db(filename)
             print "loaded db"
         # no file was loaded, so create new
         except Exception:
@@ -60,5 +100,3 @@ class ShareManager:
             self.create_new_db_file()
             self.save_db()
 
-
-a = ShareManager()

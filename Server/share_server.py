@@ -5,12 +5,20 @@
 from twisted.internet.protocol import Protocol, Factory
 from twisted.python import log
 
+import time
+import os
+
 
 class ShareServer(Protocol):
+    """This method is the logic behind what happens when we have a transport 
+    channel between the Pico application and the server and when a message 
+    is received.
+    """
 
     # Pass in factory so we can use factory for storage
-    def __init__(self, share_manager):
+    def __init__(self, share_manager, active_sessions):
         self._share_manager = share_manager
+        self._active_sessions = active_sessions
 
     # Welcome message. To check that we have indeed connected to the server.
     # To remove in future
@@ -19,6 +27,7 @@ class ShareServer(Protocol):
         self.transport.write("Welcome to pico\r\n")
 
     def dataReceived(self, data):
+        """Decode the message and marshall the arguments"""
         log.msg('data received', data)
         data = data.strip().split(']')
         if data[0] == "key":
@@ -47,8 +56,24 @@ class ShareServer(Protocol):
             # data is of form add]index]key
             self._share_manager.add_share(data[1], data[2])
             self.transport.write("secret key stored")
+        elif data[0] == "request":
+            session_id = int(data[2])
+            # data is of the form request]id]otp_challenge
+            if self._active_sessions.is_session_valid(session_id):
+                key = self._share_manager.create_revocation_key(data[1])
+                if (key):
+                    otp_response = int(os.urandom(2).encode('hex'),16)
+                    if (self._active_sessions.add_otp_response(session_id, 
+                                                        otp_response, key)):
+                        self.transport.write("%05d" % otp_response)
+                    else:
+                        self.transport.write("Error")
+                else:
+                    self.transport.write("Too many requests. Try again later.")
+            else:
+                self.transport.write("Invalid/Expired OTP challenge.")
         else:
-            self.transport.write("Unrecognised message:" + data)
+            self.transport.write("Unrecognised message:" + str(data))
         self.transport.loseConnection()
 
     def connectionLost(self, reason):
@@ -56,15 +81,17 @@ class ShareServer(Protocol):
 
 
 class ShareServerFactory(Factory):
+    """A factory that creates instances of the ShareServerProtocol
+    This also keeps track of shared references of ShareManager and Sessions
+    among the instances.
+    """
 
     _share_manager = None
+    _active_sessions = None
 
-    def __init__(self, share_manager=None):
-        if (share_manager):
-            self._share_manager = share_manager
-        else:
-            log.err("No shared database passed in, using default instead")
-            exit()
+    def __init__(self, share_manager, active_sessions):
+        self._share_manager = share_manager
+        self._active_sessions = active_sessions
 
     def buildProtocol(self, addr):
-        return ShareServer(self._share_manager)
+        return ShareServer(self._share_manager, self._active_sessions)

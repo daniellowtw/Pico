@@ -6,70 +6,115 @@
 from twisted.web.resource import Resource, NoResource
 from twisted.web.static import File
 
-root = File('front/')
 
-# TODO: Use sharemanager class as db
-#sharedValue = {'demo':['demosecret',0]}
-_share_manager_global = None
+class MyResourceWrapper(Resource):
 
-# For dev only, currently unused.
-# Read value from db
+    """This is a wrapper class around Resource so that any intialisation will 
+    require both a share_manager and active_sessions
+    """
+
+    def __init__(self, share_manager, active_sessions):
+        Resource.__init__(self)
+        self._share_manager = share_manager
+        self._active_sessions = active_sessions
+
+
 class SharedValueRes(Resource):
+
+    """A class used for checking if a key exist"""
+
     def __init__(self, index):
         Resource.__init__(self)
         self.index = index
-        
+
     def render_GET(self, request):
         return str(_share_manager_global.get(self.index))
-        
+
 # For dev only
-class GetAllKeys(Resource):
+
+
+class GetAllKeys(MyResourceWrapper):
+
+    """A class representing the page that displays all the Pico paired with the server"""
+
     def render_GET(self, request):
-        global _share_manager_global
-        return str(_share_manager_global)
-        
-class DeleteKey(Resource):
+        return str(self._share_manager)
+
+
+class DeleteKey(MyResourceWrapper):
+
+    """A class representing the page that handles the deletion of Pico data"""
+
     def render_POST(self, request):
-        x = request.args["revKey"][0]
-        if _share_manager_global.get_share(x) == None:
+        share_id = request.args["id"][0]
+        if self._share_manager.get_share(share_id) == None:
             return "Error, key is not valid."
         else:
-            _share_manager_global.delete_share(x)
+            rev_key = request.args["revKey"]
+            self._share_manager.delete_share(share_id, rev_key)
             return "Key removed successfully."
 
-class APIPage(Resource):
+
+class RequestRevKey(MyResourceWrapper):
+
+    def render_GET(self, request):
+        challenge = self._active_sessions.create_new_session()
+        if (challenge):
+            f = open('front/update.html')
+            return f.read().replace("[[OTP_CHALLENGE]]", str(challenge))
+        else:
+            return "Server is too busy. Try again later"
+
+    def render_POST(self, request):
+        if (request.args["otp_challenge"][0].isdigit() and
+        request.args["otp_response"][0].isdigit()):
+            rev_key = self._active_sessions.verify_otp_response(
+                    int(request.args["otp_challenge"][0]),
+                    int(request.args["otp_response"][0]))
+            if (rev_key):
+                return open('front/rev_key.html').read().replace("[[REVOCATION KEY]]", "This is your key:" + rev_key)
+            else:
+                return self.render_GET(request)
+        else:
+            return self.render_GET(request)
+            
+
+
+class APIPage(MyResourceWrapper):
+
     def getChild(self, name, request):
         # TODO : change to putchild
         # For dev only
         if name == 'all':
-            return GetAllKeys()
+            return GetAllKeys(self._share_manager, self._active_sessions)
         if name == 'delete':
-            return DeleteKey()
+            return DeleteKey(self._share_manager, self._active_sessions)
         else:
-            return NoResource()
-            
+            return NoResource(self._share_manager, self._active_sessions)
+
     def render_GET(self, request):
         # Don't want people to visit this page
         return ""
 
+
 class ServicesPage(Resource):
-    _share_manager = None
-    
-    def __init__(self, share_manager = None):
-        global _share_manager_global
-        if (share_manager!=None):
-            _share_manager_global = share_manager
-            self._share_manager = share_manager
-            print("share manager loaded")
-        else:
-            print("no share manager")
-            _share_manager_global = {}
-            
+
+    def __init__(self, share_manager, active_sessions):
+        root = File('front')
+        js = File('front/js/')
+        css = File('front/css/')                
+        self._share_manager = share_manager
+        self._active_sessions = active_sessions
         Resource.__init__(self)
         # TODO: make this default instead of ui path
-        self.putChild("ui", root)
-        self.putChild("api", APIPage())
-        
+        self.putChild("", root)
+        self.putChild(
+            "api", APIPage(self._share_manager, self._active_sessions))
+        self.putChild(
+            "request", RequestRevKey(self._share_manager, self._active_sessions))
+        self.putChild("js", js)
+        self.putChild("css", css)
+
     def getChild(self, id, request):
         # for dev only
         if self._share_manager.get_share(id):

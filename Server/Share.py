@@ -26,3 +26,9 @@ class Share:
 
     def increment_count(self):
         self._count += 1
+        
+    def get_rev(self):
+        return self._rev
+        
+    def set_rev(self, key):
+        self._rev = key

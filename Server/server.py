@@ -6,21 +6,8 @@ from twisted.web.server import Site
 from web_server import ServicesPage
 from share_server import ShareServerFactory
 from share_manager import ShareManager
-
-
-class Conf:
-
-    """contains the parameters such as the ports to listen to, and the names of
-    the files.
-    """
-    LOG_FILE = 'python_server.log'
-    CURRENT_STATE = 'dev'
-    WEB_PORT = 1235
-    CLIENT_PORT_SSL = 8001
-    CLIENT_PORT_NON_SSL = 1234
-    SERVER_PEM_FILE = 'server.pem'
-    SERVER_DB_FILE = 'pico_share.db'
-
+from conf import Conf
+from session_manager import SessionManager
 
 class PicoServer:
 
@@ -34,21 +21,25 @@ class PicoServer:
         self.conf = Conf()
 
     def start(self):
-        log.startLogging(open(self.conf.LOG_FILE, 'w'))
+        # log.startLogging(open(self.conf.LOG_FILE, 'w'))
         _share_manager = ShareManager(self.conf.SERVER_DB_FILE)
+        _active_sessions = SessionManager()
         cert_data = getModule(__name__).filePath.sibling(
             self.conf.SERVER_PEM_FILE).getContent()
         certificate = ssl.PrivateCertificate.loadPEM(cert_data)
         # Create endpoint for Share server
         reactor.listenSSL(
-            self.conf.CLIENT_PORT_SSL, ShareServerFactory(_share_manager),
+            self.conf.CLIENT_PORT_SSL,
+            ShareServerFactory(_share_manager, _active_sessions),
             certificate.options())
         # Listen to non ssl connection for backwards compatibility
         reactor.listenTCP(
-            self.conf.CLIENT_PORT_NON_SSL, ShareServerFactory(_share_manager))
+            self.conf.CLIENT_PORT_NON_SSL,
+            ShareServerFactory(_share_manager, _active_sessions))
         # Create endpoint for UI web server
         reactor.listenTCP(
-            self.conf.WEB_PORT, Site(ServicesPage(_share_manager)))
+            self.conf.WEB_PORT,
+            Site(ServicesPage(_share_manager, _active_sessions)))
         reactor.run()
 
 
