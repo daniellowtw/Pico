@@ -68,13 +68,30 @@
 
         </RelativeLayout>
 
-        <Button
+
+
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="@dimen/abc_action_bar_default_height"
-            android:layout_below="@+id/textStatus"
-            android:text="Create file"
-            android:onClick="onCreateFile"
-            android:id="@+id/createFileButton" />
+            android:layout_height="wrap_content">
+
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create file"
+                android:onClick="onCreateFile"
+                android:id="@+id/createFileButton"
+                android:layout_weight="1" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Request Rev Key"
+                android:onClick="onRequestRevKey"
+                android:id="@+id/requestRevKeyButton"
+                android:layout_weight="1" />
+        </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"

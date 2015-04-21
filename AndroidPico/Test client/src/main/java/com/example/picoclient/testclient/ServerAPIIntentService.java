@@ -27,8 +27,10 @@ public class ServerAPIIntentService extends IntentService {
     public static final String LOCK_APP = "LOCK_APP";
     public static final String GET_COUNT = "GET_COUNT";
     public static final String SET_DECRYPTION_KEY = "SET_DECRYPTION_KEY";
+    public static final String REQUEST_REV_KEY = "REQUEST_REV_KEY";
     public static final String UID = "UID";
     public static final String KEY = "KEY";
+    public static final String RESPONSE = "RESPONSE";
     private final String TAG = this.getClass().getSimpleName();
     int counter = 0;
     NotificationManager nm;
@@ -64,6 +66,14 @@ public class ServerAPIIntentService extends IntentService {
         Intent intent = new Intent(context, ServerAPIIntentService.class);
         intent.setAction(UNLOCK_APP);
         intent.putExtra(UID, uid);
+        context.startService(intent);
+    }
+
+    public static void requestRevKey(Context context, String uid, String response) {
+        Intent intent = new Intent(context, ServerAPIIntentService.class);
+        intent.setAction(REQUEST_REV_KEY);
+        intent.putExtra(UID, uid);
+        intent.putExtra(RESPONSE, response);
         context.startService(intent);
     }
 
@@ -120,6 +130,11 @@ public class ServerAPIIntentService extends IntentService {
                 } else if (LOCK_APP.equals(action)) {
                     handleLockApp();
                 }
+                else if (REQUEST_REV_KEY.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    final String response = intent.getStringExtra(RESPONSE);
+                    handleRequestRevKey(uid, response);
+                }
             } catch (IOException e) {
                 incrementFailedCount();
 //                showNotification("Error", "Action is " + action + " Message is " + e.getLocalizedMessage(), false);
@@ -173,6 +188,17 @@ public class ServerAPIIntentService extends IntentService {
             Intent localIntent =
                     new Intent(MainActivity.NOTIFY_USER)
                             .putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
+        }
+    }
+
+    private void handleRequestRevKey(String uid, String response) throws IOException {
+        String messageToSend = "request]" + uid + response;
+        String key = sendStringToServer(messageToSend);
+        if (!key.isEmpty()) {
+            // tell mainactivity to update UI
+            Intent localIntent = new Intent(MainActivity.NOTIFY_USER_ALERT);
+            localIntent.putExtra(MainActivity.NOTIFY_USER_MESSAGE, key);
             LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
         }
     }
