@@ -56,6 +56,7 @@ class SessionManager:
         return None
 
     def clean_up(self):
-        for session_id in self._sessions:
+        keys = self._sessions.keys()
+        for session_id in keys:
             if (not self.is_session_valid(session_id)):
                 del self._sessions[session_id]

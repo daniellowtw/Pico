@@ -1,6 +1,4 @@
 from twisted.internet import reactor, ssl
-from twisted.python import log
-from twisted.python.modules import getModule
 from twisted.web.server import Site
 
 from web_server import ServicesPage
@@ -8,6 +6,14 @@ from share_server import ShareServerFactory
 from share_manager import ShareManager
 from conf import Conf
 from session_manager import SessionManager
+
+class MySite(Site):
+    def getResourceFor(self, request):
+        request.setHeader('X-Frame-Options', 'DENY')
+        request.setHeader('X-XSS-Protection', '1')
+        request.setHeader('X-Content-Type-Options','nosniff')
+        request.setHeader('Server', 'None')
+        return Site.getResourceFor(self, request)
 
 class PicoServer:
 
@@ -24,8 +30,7 @@ class PicoServer:
         # log.startLogging(open(self.conf.LOG_FILE, 'w'))
         _share_manager = ShareManager(self.conf.SERVER_DB_FILE)
         _active_sessions = SessionManager()
-        cert_data = getModule(__name__).filePath.sibling(
-            self.conf.SERVER_PEM_FILE).getContent()
+        cert_data = open(self.conf.SERVER_PEM_FILE).read()
         certificate = ssl.PrivateCertificate.loadPEM(cert_data)
         # Create endpoint for Share server
         reactor.listenSSL(
@@ -39,7 +44,12 @@ class PicoServer:
         # Create endpoint for UI web server
         reactor.listenTCP(
             self.conf.WEB_PORT,
-            Site(ServicesPage(_share_manager, _active_sessions)))
+            MySite(ServicesPage(_share_manager, _active_sessions)))
+        # Create TLS endpoing for UI web server
+        reactor.listenSSL(
+            self.conf.WEB_PORT_SSL,
+            MySite(ServicesPage(_share_manager, _active_sessions)),
+            certificate.options())
         reactor.run()
 
 

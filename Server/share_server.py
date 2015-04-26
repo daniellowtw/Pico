@@ -5,7 +5,6 @@
 from twisted.internet.protocol import Protocol, Factory
 from twisted.python import log
 
-import time
 import os
 
 

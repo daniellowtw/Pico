@@ -30,8 +30,6 @@ class SharedValueRes(Resource):
     def render_GET(self, request):
         return str(self._share_manager.get(self.index))
 
-# For dev only
-
 
 class GetAllKeys(MyResourceWrapper):
 
@@ -46,12 +44,14 @@ class DeleteKey(MyResourceWrapper):
     """A class representing the page that handles the deletion of Pico data"""
 
     def render_POST(self, request):
-        revocation_key = request.args["revKey"][0]
-        if self._share_manager.revoke_share(revocation_key):
-            return "Key removed successfully."
-        else:
-            return "Error, key is not valid."
-
+        try:
+            revocation_key = request.args["revKey"][0]
+            if self._share_manager.revoke_share(revocation_key):
+                return "Key removed successfully."
+            else:
+                return "Error, key is not valid."
+        except KeyError:
+            return ""
 
 class RequestRevKey(MyResourceWrapper):
 
@@ -64,35 +64,38 @@ class RequestRevKey(MyResourceWrapper):
             return "Server is too busy. Try again later"
 
     def render_POST(self, request):
-        if (request.args["otp_challenge"][0].isdigit() and
-        request.args["otp_response"][0].isdigit()):
-            rev_key = self._active_sessions.verify_otp_response(
-                    int(request.args["otp_challenge"][0]),
-                    int(request.args["otp_response"][0]))
-            if (rev_key):
-                return open('front/rev_key.html').read().replace("[[REVOCATION KEY]]", "This is your key:" + rev_key)
+        try:
+            if (request.args["otp_challenge"][0].isdigit() and
+            request.args["otp_response"][0].isdigit()):
+                rev_key = self._active_sessions.verify_otp_response(
+                        int(request.args["otp_challenge"][0]),
+                        int(request.args["otp_response"][0]))
+                if (rev_key):
+                    return open('front/rev_key.html').read().replace("[[REVOCATION KEY]]", "This is your key:" + rev_key)
+                else:
+                    return self.render_GET(request)
             else:
                 return self.render_GET(request)
-        else:
+        except KeyError:
             return self.render_GET(request)
-            
 
 
 class APIPage(MyResourceWrapper):
 
     def getChild(self, name, request):
-        # TODO : change to putchild
         # For dev only
         if name == 'all':
             return GetAllKeys(self._share_manager, self._active_sessions)
         if name == 'delete':
             return DeleteKey(self._share_manager, self._active_sessions)
         else:
-            return NoResource(self._share_manager, self._active_sessions)
+            return NoResource()
 
     def render_GET(self, request):
         # Don't want people to visit this page
         return ""
+
+
 
 
 class ServicesPage(Resource):
@@ -104,7 +107,6 @@ class ServicesPage(Resource):
         self._share_manager = share_manager
         self._active_sessions = active_sessions
         Resource.__init__(self)
-        # TODO: make this default instead of ui path
         self.putChild("", root)
         self.putChild(
             "api", APIPage(self._share_manager, self._active_sessions))

@@ -1,6 +1,5 @@
 import pickle
-import Share
-import pprint as pp
+from share import Share
 import logging
 import base64
 import os
@@ -16,18 +15,20 @@ class ShareManager:
         """Create the necessary database files and preload a default share"""
         logging.info("create new db called")
         temp_db_object = {}
-        sample = Share.Share("The demo secret")
+        sample = Share('demo', "The demo secret")
         temp_db_object["demo"] = sample
         self._loaded_database = temp_db_object
         self._pico_lookup = {}
         self.save_db()
 
     def add_share(self, id, key):
-        temp_share = Share.Share(key)
+        temp_share = Share(id, key)
         self._loaded_database[id] = temp_share
         self.save_db()
 
     def delete_share(self, id):
+        """Deprecated. Use revoke_share instead. Keeping for debugging purposes
+        """
         if (self._loaded_database.has_key(id)):
             del self._loaded_database[id]
             self.save_db()
