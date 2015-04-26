@@ -6,11 +6,15 @@
         <item>15 Seconds</item>
         <item>1 Minute</item>
         <item>2 Minute</item>
+        <item>3 Minute</item>
+        <item>4 Minute</item>
         <item>5 Minute</item>
         <item>10 Minute</item>
         <item>15 minutes</item>
+        <item>20 Minute</item>
         <item>30 minutes</item>
         <item>1 hour</item>
+        <item>2 hour</item>
         <item>3 hours</item>
         <item>6 hours</item>
     </string-array>
@@ -19,11 +23,15 @@
         <item>15000</item>
         <item>60000</item>
         <item>120000</item>
+        <item>180000</item>
+        <item>240000</item>
         <item>300000</item>
         <item>600000</item>
         <item>900000</item>
+        <item>1200000</item>
         <item>1800000</item>
         <item>3600000</item>
+        <item>7200000</item>
         <item>10800000</item>
         <item>21600000</item>
     </string-array>

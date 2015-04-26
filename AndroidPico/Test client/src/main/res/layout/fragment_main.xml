@@ -52,19 +52,19 @@
                 android:textSize="@dimen/time_left_unlocked_fontsize"
                 android:typeface="sans" />
 
-            <TextView
-                android:text="@string/time_to_lock"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/text_time_left"
-                android:gravity="top|left"
-                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
-                android:textAlignment="center"
-                android:textIsSelectable="false"
-                android:textSize="@dimen/time_left_unlocked_fontsize"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true" />
+            <!--<TextView-->
+                <!--android:text="@string/time_to_lock"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:id="@+id/text_time_left"-->
+                <!--android:gravity="top|left"-->
+                <!--style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"-->
+                <!--android:textAlignment="center"-->
+                <!--android:textIsSelectable="false"-->
+                <!--android:textSize="@dimen/time_left_unlocked_fontsize"-->
+                <!--android:layout_alignParentBottom="true"-->
+                <!--android:layout_alignParentLeft="true"-->
+                <!--android:layout_alignParentStart="true" />-->
 
         </RelativeLayout>
 

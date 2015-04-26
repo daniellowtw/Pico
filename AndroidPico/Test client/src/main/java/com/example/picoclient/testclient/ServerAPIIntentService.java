@@ -113,10 +113,10 @@ public class ServerAPIIntentService extends IntentService {
             long startTrafficTransmitted = TrafficStats.getTotalTxBytes();
             try {
                 stateLoggingIntent.putExtra("poll_status", 1);
-//                if (START_POLLING.equals(action)) {
-//                    final String uid = intent.getStringExtra(UID);
-//                    handleUnlockApp(uid);
-//                } else
+                if (START_POLLING.equals(action)) {
+                    final String uid = intent.getStringExtra(UID);
+                    handleUnlockApp(uid);
+                } else
                 if (GET_COUNT.equals(action)) {
                     final String uid = intent.getStringExtra(UID);
                     handleGetKeyCount(uid);
@@ -267,7 +267,8 @@ public class ServerAPIIntentService extends IntentService {
     private void incrementFailedCount() {
         // Increment failed count in app
         if (prefs.contains("failedAttempts")) {
-            prefs.edit().putInt("failedAttempts", prefs.getInt("failedAttempts", 0) + 1).commit();
+            prefs.edit().putInt("failedAttempts",
+                    prefs.getInt("failedAttempts", 0) + 1).commit();
         } else {
             prefs.edit().putInt("failedAttempts", 1).commit();
         }
@@ -276,7 +277,8 @@ public class ServerAPIIntentService extends IntentService {
     private void incrementSuccessCount() {
         // Increment successful count in app
         if (prefs.contains("successfulAttempts")) {
-            prefs.edit().putInt("successfulAttempts", prefs.getInt("successfulAttempts", 0) + 1).commit();
+            prefs.edit().putInt("successfulAttempts",
+                    prefs.getInt("successfulAttempts", 0) + 1).commit();
         } else {
             prefs.edit().putInt("successfulAttempts", 1).commit();
         }

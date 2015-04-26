@@ -32,6 +32,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+
 public class MainActivity extends ActionBarActivity {
     // Actions this activity can do. To be used by intent service
     public static final String UNLOCK_APP = "UNLOCK_APP";
@@ -47,24 +48,6 @@ public class MainActivity extends ActionBarActivity {
     private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
-//    @Override
-//    protected void onDestroy() {
-//        Log.i(this.getClass().getSimpleName(), "onDestroy called");
-//        super.onDestroy();
-//    }
-//
-//    @Override
-//    protected void onStop() {
-//        Log.i(this.getClass().getSimpleName(), "onStop called");
-//        super.onStop();
-//    }
-//
-//    @Override
-//    protected void onRestart() {
-//        Log.i(this.getClass().getSimpleName(), "onRestart called");
-//        super.onRestart();
-//    }
-//
     @Override
     protected void onStart() {
         Log.v(this.getClass().getSimpleName(), "onStart called ");
@@ -72,12 +55,6 @@ public class MainActivity extends ActionBarActivity {
         ((ProgressBar)findViewById(R.id.uploadProgressBar)).setVisibility(View.GONE);
         ((TextView)findViewById(R.id.uploadProgressText)).setVisibility(View.GONE);
     }
-//
-//    @Override
-//    protected void onResume() {
-//        Log.v(this.getClass().getSimpleName(), "onStop called");
-//        super.onResume();
-//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,10 +142,8 @@ public class MainActivity extends ActionBarActivity {
 
     public void onLockOrUnlockApp(View v) {
         if (appPref.contains("secretKey")) {
-            //lock
             ServerAPIIntentService.lockApp(this);
         } else {
-            //unlock
             ServerAPIIntentService.unlockApp(this, uid);
         }
     }
@@ -225,7 +200,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void uploadDB(View v) {
-        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext(), findViewById(R.id.uploadProgressBar), findViewById(R.id.uploadProgressText));
+        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext(),
+                findViewById(R.id.uploadProgressBar),
+                findViewById(R.id.uploadProgressText));
         asyncTask.execute(getDatabasePath(DBHelper.DATABASE_NAME));
     }
 
