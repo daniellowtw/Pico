@@ -22,24 +22,12 @@
 <body>
 
     <div class="container">
+        Your revocation key is
+        <br>
+        [[REVOCATION KEY]]
 
-        <form role="form" class="form-signin" onsubmit="return false">
-            <h2 class="form-signin-heading">Pico Remote disabling</h2>
-            <label for="revKey" class="sr-only">revocation key</label>
-            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="Revocation key" required>
-            <button type="submit" class="btn btn-lg btn-primary btn-block" id="disableBtn" onclick="sendReq()">Disable</button>
-        </form>
-        <!-- <div class="row"> -->
-            <div class="col-sm-4 center">
-                <div class="well well-lg" style="display:none" id="result">
-                    
-                </div>
-            </div>
-        <!-- </div> -->
-        <div class="form-signin">
-            
-                <a href="../request" class="btn btn-primary btn-lg btn-block" >Request for revocation key</a>
-        </div>
+        <p>
+        Please keep this key safe by printing it out and storing it. You will need to provide this key when you want to disable your Pico in the future.
     </div>
     <!-- /container -->
 

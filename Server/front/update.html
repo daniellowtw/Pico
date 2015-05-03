@@ -23,11 +23,14 @@
 
     <div class="container">
 
-        <form role="form" class="form-signin" onsubmit="return false">
-            <h2 class="form-signin-heading">Pico Remote disabling</h2>
-            <label for="revKey" class="sr-only">revocation key</label>
-            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="Revocation key" required>
-            <button type="submit" class="btn btn-lg btn-primary btn-block" id="disableBtn" onclick="sendReq()">Disable</button>
+        <form role="form" action="request" method="post" class="form-signin">
+            <h2 class="form-signin-heading">Request for revocation key</h2>
+            <label for="deviceId" class="sr-only">OTP</label>
+            <input type="text" autocomplete="off" disabled="true" id="otp_challenge" class="form-control" value="OTP_CHALLENGE: [[OTP_CHALLENGE]]">
+            <input type="hidden" name="otp_challenge" value="[[OTP_CHALLENGE]]">
+            <label for="revKey" class="sr-only">OTP response</label>
+            <input type="text" name="otp_response" autocomplete="off" id="revKey" class="form-control" placeholder="OTP response" required>
+            <button type="submit" class="btn btn-lg btn-primary btn-block" id="disableBtn">Request for key</button>
         </form>
         <!-- <div class="row"> -->
             <div class="col-sm-4 center">
@@ -36,10 +39,6 @@
                 </div>
             </div>
         <!-- </div> -->
-        <div class="form-signin">
-            
-                <a href="../request" class="btn btn-primary btn-lg btn-block" >Request for revocation key</a>
-        </div>
     </div>
     <!-- /container -->
 

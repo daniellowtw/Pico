@@ -52,29 +52,46 @@
                 android:textSize="@dimen/time_left_unlocked_fontsize"
                 android:typeface="sans" />
 
-            <TextView
-                android:text="@string/time_to_lock"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/text_time_left"
-                android:gravity="top|left"
-                style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"
-                android:textAlignment="center"
-                android:textIsSelectable="false"
-                android:textSize="@dimen/time_left_unlocked_fontsize"
-                android:layout_alignParentBottom="true"
-                android:layout_alignParentLeft="true"
-                android:layout_alignParentStart="true" />
+            <!--<TextView-->
+                <!--android:text="@string/time_to_lock"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:id="@+id/text_time_left"-->
+                <!--android:gravity="top|left"-->
+                <!--style="@style/TextAppearance.AppCompat.Light.Base.Widget.PopupMenu.Large"-->
+                <!--android:textAlignment="center"-->
+                <!--android:textIsSelectable="false"-->
+                <!--android:textSize="@dimen/time_left_unlocked_fontsize"-->
+                <!--android:layout_alignParentBottom="true"-->
+                <!--android:layout_alignParentLeft="true"-->
+                <!--android:layout_alignParentStart="true" />-->
 
         </RelativeLayout>
 
-        <Button
+
+
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="@dimen/abc_action_bar_default_height"
-            android:layout_below="@+id/textStatus"
-            android:text="Create file"
-            android:onClick="onCreateFile"
-            android:id="@+id/createFileButton" />
+            android:layout_height="wrap_content">
+
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Create file"
+                android:onClick="onCreateFile"
+                android:id="@+id/createFileButton"
+                android:layout_weight="1" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Request Rev Key"
+                android:onClick="onRequestRevKey"
+                android:id="@+id/requestRevKeyButton"
+                android:layout_weight="1" />
+        </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"

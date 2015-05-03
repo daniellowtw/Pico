@@ -6,15 +6,16 @@ class Share:
     _greeting = None
     _count = None
 
-    def __init__(self, secret):
+    def __init__(self, id, secret):
         self._secret = secret
         self._count = 0
+        self._id = id
 
     def __str__(self):
         return ("id: " + str(self._id) + "\n"
         + "secret: " + str(self._secret) + "\n"
         + "rev: " + str(self._rev) + "\n"
-        + "greeting: " + str(self._greeting) + "\n"
+#        + "greeting: " + str(self._greeting) + "\n"
         + "count: " + str(self._count) + "\n")
 
     def get_secret(self):
@@ -26,3 +27,9 @@ class Share:
 
     def increment_count(self):
         self._count += 1
+        
+    def get_rev(self):
+        return self._rev
+        
+    def set_rev(self, key):
+        self._rev = key

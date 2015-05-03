@@ -18,8 +18,8 @@ android {
 
         defaultConfig {
             versionCode code
-            versionName "1.4." + code
-            minSdkVersion 15
+            versionName "1.5." + code
+            minSdkVersion 19
             targetSdkVersion 19
         }
     }

@@ -1,7 +1,9 @@
 package com.example.picoclient.testclient;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -11,11 +13,14 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.InputType;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,37 +32,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 
+
 public class MainActivity extends ActionBarActivity {
     // Actions this activity can do. To be used by intent service
     public static final String UNLOCK_APP = "UNLOCK_APP";
     public static final String LOCK_APP = "LOCK_APP";
     public static final String DECRYPT_FILE = "DECRYPT_FILE";
     public static final String NOTIFY_USER = "NOTIFY_USER";
+    public static final String NOTIFY_USER_ALERT = "NOTIFY_USER_ALERT";
     public static final String NOTIFY_USER_MESSAGE = "NOTIFY_USER_MESSAGE";
+
     /* Putting state variables here so they can be persistent throughout Activity's life */
     MainFragment mainFragment;
     SharedPreferences appPref;
     private AlarmBroadcastReceiver alarmBroadcastReceiver;
     private String uid;
 
-//    @Override
-//    protected void onDestroy() {
-//        Log.i(this.getClass().getSimpleName(), "onDestroy called");
-//        super.onDestroy();
-//    }
-//
-//    @Override
-//    protected void onStop() {
-//        Log.i(this.getClass().getSimpleName(), "onStop called");
-//        super.onStop();
-//    }
-//
-//    @Override
-//    protected void onRestart() {
-//        Log.i(this.getClass().getSimpleName(), "onRestart called");
-//        super.onRestart();
-//    }
-//
     @Override
     protected void onStart() {
         Log.v(this.getClass().getSimpleName(), "onStart called ");
@@ -65,12 +55,6 @@ public class MainActivity extends ActionBarActivity {
         ((ProgressBar)findViewById(R.id.uploadProgressBar)).setVisibility(View.GONE);
         ((TextView)findViewById(R.id.uploadProgressText)).setVisibility(View.GONE);
     }
-//
-//    @Override
-//    protected void onResume() {
-//        Log.v(this.getClass().getSimpleName(), "onStop called");
-//        super.onResume();
-//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,6 +80,7 @@ public class MainActivity extends ActionBarActivity {
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(LOCK_APP));
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(DECRYPT_FILE));
         LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(NOTIFY_USER));
+        LocalBroadcastManager.getInstance(this).registerReceiver(responseReceiver, new IntentFilter(NOTIFY_USER_ALERT));
     }
 
     @Override
@@ -157,10 +142,8 @@ public class MainActivity extends ActionBarActivity {
 
     public void onLockOrUnlockApp(View v) {
         if (appPref.contains("secretKey")) {
-            //lock
             ServerAPIIntentService.lockApp(this);
         } else {
-            //unlock
             ServerAPIIntentService.unlockApp(this, uid);
         }
     }
@@ -174,6 +157,25 @@ public class MainActivity extends ActionBarActivity {
         Log.i("ButtonPress", "Asking for Decryption key");
     }
 
+    public void onRequestRevKey(View v){
+        final EditText input = new EditText(this);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER);
+        new AlertDialog.Builder(this)
+                .setTitle("Enter OTP challenge")
+//                .setMessage("Enter OTP challenge")
+                .setView(input)
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        Editable value = input.getText();
+                        ServerAPIIntentService.requestRevKey(getApplicationContext(), uid, value.toString());
+                        Toast.makeText(getApplicationContext(), "Checking with server", Toast.LENGTH_SHORT).show();
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Do nothing.
+            }
+        }).show();
+    }
 
     public void viewAppPref(View v) {
         Toast.makeText(this, appPref.getAll().toString(), Toast.LENGTH_LONG).show();
@@ -198,7 +200,9 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void uploadDB(View v) {
-        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext(), findViewById(R.id.uploadProgressBar), findViewById(R.id.uploadProgressText));
+        UploadDBAsync asyncTask = new UploadDBAsync(getApplicationContext(),
+                findViewById(R.id.uploadProgressBar),
+                findViewById(R.id.uploadProgressText));
         asyncTask.execute(getDatabasePath(DBHelper.DATABASE_NAME));
     }
 
@@ -224,6 +228,22 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    public void createAlertMessage(String message){
+        final TextView tv = new TextView(this);
+        tv.setText(message);
+        new AlertDialog.Builder(this)
+                .setTitle("Response")
+                .setView(tv)
+                .setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                    }
+                }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Do nothing.
+            }
+        }).show();
+    }
+
     // This instance doesn't get destroyed after handling a broadcast
     private class ResponseReceiver extends BroadcastReceiver {
 
@@ -246,6 +266,10 @@ public class MainActivity extends ActionBarActivity {
                     String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);
                     Log.i(this.getClass().getSimpleName(), "Message to user is " + message);
                     Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                } else if (NOTIFY_USER_ALERT.equals(intent.getAction())) {
+                    String message = intent.getStringExtra(NOTIFY_USER_MESSAGE);
+                    Log.i(this.getClass().getSimpleName(), "Message to user is " + message);
+                    createAlertMessage(message);
                 }
             }
         }

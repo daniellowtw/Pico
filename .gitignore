@@ -1,3 +1,4 @@
 /Server/*.pyc
 /Server/*.log
 *.sh
+*.log

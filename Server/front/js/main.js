@@ -10,8 +10,3 @@ function sendReq(){
         console.log(data, textStatus)
     });
 }
-
-// $('#disableBtn').click(function(){alert(0)})
-// jQuery(document).ready(function($) {
-//     $('#disableBtn').click(sendReq)
-// });

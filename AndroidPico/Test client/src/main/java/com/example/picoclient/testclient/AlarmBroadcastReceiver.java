@@ -10,9 +10,19 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.util.Log;
 
-// This class will schedule the alarms for future actions.
-// e.g. polling the server at regular interval, making sure app locks after certain interval
+/**
+ * This class will schedule the alarms for future actions.
+ * e.g. polling the server at regular interval, making sure app locks after certain interval
+ */
+
 public class AlarmBroadcastReceiver extends BroadcastReceiver {
+
+    /**
+     * Expose three methods: set polling alarm, set locking alarm and cancel alarm.
+     * These alarms will fire an intent that is caught by the onReceive method of this class.
+     * This then calls the methods of ServerAPIIntentService.
+     */
+
     private static int POLLING_ALARM = R.string.polling_alarm;
     private static int LOCKING_ALARM = R.string.locking_alarm;
     private static String POLLING_ALARM_ACTION = "POLLING_ALARM_ACTION";
@@ -22,14 +32,18 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent != null) {
             if (POLLING_ALARM_ACTION.equals(intent.getAction())) {
-                ServerAPIIntentService.startPolling(context, Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID));
+                ServerAPIIntentService.unlockApp(context,
+                        Settings.Secure.getString(context.getContentResolver(),
+                                Settings.Secure.ANDROID_ID));
+                setPollingAlarm(context);
             } else if (LOCKING_ALARM_ACTION.equals(intent.getAction())) {
                 ServerAPIIntentService.lockApp(context);
             } else {
-                Log.e(this.getClass().getSimpleName(), "unknown intent action " + intent.getAction());
+                Log.e(this.getClass().getSimpleName(),
+                        "unknown intent action " + intent.getAction());
             }
         }
-        Log.i("ALARM", "Intent action is " + intent.getAction());
+//        Log.i("ALARM", "Intent action is " + intent.getAction());
     }
 
     public void setPollingAlarm(Context context) {
@@ -37,11 +51,12 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         Intent i = new Intent(context, AlarmBroadcastReceiver.class);
         i.setAction(POLLING_ALARM_ACTION);
         PendingIntent pi = PendingIntent.getBroadcast(context, POLLING_ALARM, i, 0);
-        // Inexact reduces battery drain associated with waking the device to perform polling.
-        // However, the frequencies are INTERVAL_FIFTEEN_MINUTES, INTERVAL_HALF_HOUR, INTERVAL_HOUR,
-        // INTERVAL_HALF_DAY, INTERVAL_DAY
-        String interval = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_interval", "0");
-        am.setRepeating(AlarmManager.RTC, System.currentTimeMillis(), Integer.parseInt(interval), pi); // Millisec * Second * Minute
+        String interval = PreferenceManager
+                .getDefaultSharedPreferences(context)
+                .getString("pref_interval", "0");
+        am.setExact(AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + Integer.parseInt(interval),
+                pi);
         Log.i("ALARM", "Polling Alarm set");
     }
 
@@ -49,14 +64,13 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent i = new Intent(context, AlarmBroadcastReceiver.class);
         i.setAction(LOCKING_ALARM_ACTION);
-        PendingIntent pi = PendingIntent.getBroadcast(context, LOCKING_ALARM, i, PendingIntent.FLAG_UPDATE_CURRENT);
-        String interval = PreferenceManager.getDefaultSharedPreferences(context).getString("pref_alive_interval", "0");
-        if (Build.VERSION.SDK_INT <19) {
-            am.set(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after pref_alive_interval sec
-        }
-        else{
-            am.setExact(AlarmManager.RTC, System.currentTimeMillis() + Integer.parseInt(interval), pi); // Lock the app after pref_alive_interval sec
-        }
+        PendingIntent pi = PendingIntent.getBroadcast(context, LOCKING_ALARM, i,
+                PendingIntent.FLAG_CANCEL_CURRENT);
+        String interval = PreferenceManager.getDefaultSharedPreferences(context)
+                .getString("pref_alive_interval", "0");
+        am.setExact(AlarmManager.RTC_WAKEUP,
+                System.currentTimeMillis() + Integer.parseInt(interval),
+                pi);
         Log.i("ALARM", "Locking alarm set");
     }
 
