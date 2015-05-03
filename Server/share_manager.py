@@ -21,21 +21,26 @@ class ShareManager:
         self._pico_lookup = {}
         self.save_db()
 
-    def add_share(self, id, key):
-        temp_share = Share(id, key)
+    def add_share(self, id, server_share):
+        """Create a new share with the given Pico ID and server share."""
+        temp_share = Share(id, server_share)
         self._loaded_database[id] = temp_share
         self.save_db()
 
-    def delete_share(self, id):
-        """Deprecated. Use revoke_share instead. Keeping for debugging purposes
-        """
-        if (self._loaded_database.has_key(id)):
-            del self._loaded_database[id]
-            self.save_db()
-        else:
-            logging.error("trying to delete a share that does not exist")
+
+#    def delete_share(self, id):
+#        """Deprecated. Use revoke_share instead. Keeping for debugging purposes
+#        """
+#        if (self._loaded_database.has_key(id)):
+#            del self._loaded_database[id]
+#            self.save_db()
+#        else:
+#            logging.error("trying to delete a share that does not exist")
 
     def revoke_share(self, rev_key):
+        """If the rev_key is valid, delete the associated share. Returns
+        whether the operation succeeds or not.
+        """
         if self._pico_lookup.has_key(rev_key):
             id = self._pico_lookup[rev_key]
             del self._loaded_database[id]
@@ -46,10 +51,12 @@ class ShareManager:
             return False
 
     def get_database(self):
+        """Return the dictionary of shares."""
         return self._loaded_database
         
     def get_revocation_key(self, id):
         """Retrieve the revocation key of the given Pico ID.
+        If there is no such share, return None.
         """
         share = self.get_share(id)
         if share:
@@ -61,7 +68,8 @@ class ShareManager:
     def create_revocation_key(self, id):
         """If the user authenticates the request from the web UI and a
         revocation key is not yet associated with this id, create one and
-        return the OTP challenge response.
+        return the OTP challenge response. If there is no such share, return
+        None.
         """
         share = self.get_share(id)
         if share:
@@ -77,17 +85,21 @@ class ShareManager:
             return None
                 
     def get_share(self, id):
+        """Return the share with the given id or return None if not found."""
         if (self._loaded_database.has_key(id)):
             return self._loaded_database.get(id)
         else:
             return None
 
     def save_db(self):
+        """Saves the dictionaries to a file."""
         combined_database = {'loaded_db':self._loaded_database, 'pico_lookup':self._pico_lookup}
         pickle.dump(combined_database, open(self._filename, 'wb'))
         
     def load_db(self, filename):
-        """Tries to load db from file. Might throw exception"""
+        """Tries to load the share and lookup dictionaries. Throws an 
+        exception if file does not exist.
+        """
         combined_database = pickle.load(open(filename, 'rb'))
         self._loaded_database = combined_database['loaded_db']
         self._pico_lookup = combined_database['pico_lookup']
