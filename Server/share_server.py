@@ -3,6 +3,7 @@
 @author: Daniel
 """
 from twisted.internet.protocol import Protocol, Factory
+from twisted.internet import error
 from twisted.python import log
 
 import os
@@ -16,15 +17,18 @@ class ShareServer(Protocol):
     """
 
     # Pass in factory so we can use factory for storage
-    def __init__(self, share_manager, active_sessions):
+    def __init__(self, factory, share_manager, active_sessions):
+        self._factory = factory
         self._share_manager = share_manager
         self._active_sessions = active_sessions
 
     # Welcome message. To check that we have indeed connected to the server.
     # To remove in future
     def connectionMade(self):
+        self._factory.count += 1
 #        log.msg('connectionMade')
-        self.transport.write("Welcome to pico\r\n")
+        self.transport.write("Welcome to pico. " + str(self._factory.count) 
+                            + "\r\n")
 
     def dataReceived(self, data):
         """Decode the message and marshall the arguments"""
@@ -78,11 +82,15 @@ class ShareServer(Protocol):
         self.transport.loseConnection()
 
     def connectionLost(self, reason):
+        if not reason.check(error.ConnectionClosed):
+            print("bad")
+        self._factory.count -= 1
 #        log.msg('connectionLost', reason)
         pass
 
 
 class ShareServerFactory(Factory):
+    count = 0
 
     """A factory that creates instances of the ShareServerProtocol
     This also keeps track of shared references of ShareManager and Sessions
@@ -97,4 +105,4 @@ class ShareServerFactory(Factory):
         self._active_sessions = active_sessions
 
     def buildProtocol(self, addr):
-        return ShareServer(self._share_manager, self._active_sessions)
+        return ShareServer(self, self._share_manager, self._active_sessions)
