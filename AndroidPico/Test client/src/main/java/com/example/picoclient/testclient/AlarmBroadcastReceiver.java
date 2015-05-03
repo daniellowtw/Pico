@@ -31,7 +31,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent != null) {
             if (POLLING_ALARM_ACTION.equals(intent.getAction())) {
-                ServerAPIIntentService.startPolling(context,
+                ServerAPIIntentService.unlockApp(context,
                         Settings.Secure.getString(context.getContentResolver(),
                                 Settings.Secure.ANDROID_ID));
                 setPollingAlarm(context);
