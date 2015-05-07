@@ -7,6 +7,8 @@ from share_manager import ShareManager
 from conf import Conf
 from session_manager import SessionManager
 
+import getpass
+
 class MySite(Site):
     def getResourceFor(self, request):
         request.setHeader('X-Frame-Options', 'DENY')
@@ -23,12 +25,13 @@ class PicoServer:
     global state.
     """
 
-    def __init__(self, conf):
+    def __init__(self, conf, db_passphrase):
         self.conf = Conf()
+        self.db_passphrase = db_passphrase
 
     def start(self):
         # log.startLogging(open(self.conf.LOG_FILE, 'w'))
-        _share_manager = ShareManager(self.conf.SERVER_DB_FILE)
+        _share_manager = ShareManager(self.conf.SERVER_DB_FILE, self.db_passphrase)
         _active_sessions = SessionManager()
         cert_data = open(self.conf.SERVER_PEM_FILE).read()
         certificate = ssl.PrivateCertificate.loadPEM(cert_data)
@@ -54,8 +57,9 @@ class PicoServer:
 
 
 def main():
+    passphrase = getpass.getpass("Enter database password: ")
     conf = Conf()
-    pico_server = PicoServer(conf)
+    pico_server = PicoServer(conf, passphrase)
     pico_server.start()
 
 if __name__ == '__main__':

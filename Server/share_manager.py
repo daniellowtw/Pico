@@ -3,14 +3,43 @@ from share import Share
 import logging
 import base64
 import os
+from Crypto.Cipher import AES
+import hashlib
 
 logging.basicConfig(filename='example.log', level=logging.DEBUG)
+
+class AESCipher(object):
+
+    def __init__(self, key): 
+        self.bs = 32
+        self.key = hashlib.sha256(key.encode()).digest()
+
+    def encrypt(self, raw):
+        raw = self._pad(raw)
+        iv = os.urandom(AES.block_size)
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return base64.b64encode(iv + cipher.encrypt(raw))
+
+    def decrypt(self, enc):
+        enc = base64.b64decode(enc)
+        iv = enc[:AES.block_size]
+        cipher = AES.new(self.key, AES.MODE_CBC, iv)
+        return self._unpad(cipher.decrypt(enc[AES.block_size:])).decode('utf-8')
+
+    def _pad(self, s):
+        return s + (self.bs - len(s) % self.bs) * chr(self.bs - len(s) % self.bs)
+
+    @staticmethod
+    def _unpad(s):
+        return s[:-ord(s[len(s)-1:])]
 
 
 class ShareManager:
     _pico_store = None
     _disabling_key_pico_map = None
     _enabling_key_pico_map = None
+    _aes = None
+
 
     # Create sample data
     def create_new_db_file(self):
@@ -129,13 +158,19 @@ class ShareManager:
             'pico_store': self._pico_store,
             'disabling_key_map': self._disabling_key_pico_map,
             'enabling_key_map': self._enabling_key_pico_map}
-        pickle.dump(combined_database, open(self._filename, 'wb'))
+        serialised = pickle.dumps(combined_database)
+        with open(self._filename, 'wb') as f:
+            f.write(self._aes.encrypt(serialised))
+        
+        
+        
 
     def load_db(self, filename):
         """Tries to load the share and lookup dictionaries. Throws an
         exception if file does not exist.
         """
-        combined_database = pickle.load(open(filename, 'rb'))
+        with open(self._filename, 'r') as f:
+            combined_database = pickle.loads(self._aes.decrypt(f.read()))
         self._pico_store = combined_database['pico_store']
         self._disabling_key_pico_map = combined_database['disabling_key_map']
         self._enabling_key_pico_map = combined_database['enabling_key_map']
@@ -147,8 +182,10 @@ class ShareManager:
             res += (str(index) + "\n\n" + str(share) + "\n\n\n")
         return res
 
-    def __init__(self, filename):
+    def __init__(self, filename, db_passphrase):
         self._filename = filename
+        self._aes = AESCipher(db_passphrase)
+        
         try:
             logging.info("trying to load" + filename)
             self.load_db(filename)
