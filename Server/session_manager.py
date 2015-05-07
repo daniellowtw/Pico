@@ -36,14 +36,14 @@ class SessionManager:
         else:
             return False
 
-    def add_otp_response_and_key(self, challenge, response, key):
-        """Used by the share server to create response code and store the key.
-        This checks if the session token has expired and return whether the 
-        operation succeeded or not.
+    def add_otp_response_and_keys(self, challenge, response, keys):
+        """Used by the share server to create response code and store the keys.
+        Check if the session token has expired and return whether the operation 
+        succeeded or not.
         """
         if (self.has_session(challenge)):
             self._sessions[challenge]['response'] = response
-            self._sessions[challenge]['key'] = key
+            self._sessions[challenge]['key'] = keys
             return True
         else:
             return False

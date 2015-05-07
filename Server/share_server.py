@@ -10,8 +10,8 @@ import os
 
 class ShareServer(Protocol):
 
-    """This method is the logic behind what happens when we have a transport 
-    channel between the Pico application and the server and when a message 
+    """This method is the logic behind what happens when we have a transport
+    channel between the Pico application and the server and when a message
     is received.
     """
 
@@ -21,7 +21,6 @@ class ShareServer(Protocol):
         self._active_sessions = active_sessions
 
     # Welcome message. To check that we have indeed connected to the server.
-    # To remove in future
     def connectionMade(self):
         log.msg('connectionMade')
         self.transport.write("Welcome to pico\r\n")
@@ -30,47 +29,47 @@ class ShareServer(Protocol):
         """Decode the message and marshall the arguments"""
         log.msg('data received', data)
         data = data.strip().split(']')
-        if data[0] == "key":
-            # key is in data[1]
-            log.msg('key asked', data[1])
-            share = self._share_manager.get_share(data[1])
-            if (share):
-                # key is in db
-                self.transport.write("secret key has been asked " +
-                                     str(share.get_count()) + " times.\r\n")
-            else:
-                # key not in db
-                self.transport.write("Revoked/Non-existent key")
 
-        elif data[0] == "get":
-            # data is of form add]index
-            share = self._share_manager.get_share(data[1])
-            if (share):
-                # key is in db
-                self.transport.write(share.get_secret())
-            else:
-                # key not in db
-                self.transport.write("Revoked/Non-existent key")
-        elif data[0] == "add":
-            # add key to db
-            # data is of form add]index]key
-            self._share_manager.add_share(data[1], data[2])
-            self.transport.write("secret key stored")
-        elif data[0] == "request" and data[2].isdigit():
-            session_id = int(data[2])
-            # data is of the form request]id]otp_challenge
-            if self._active_sessions.is_session_valid(session_id):
-                key = self._share_manager.create_revocation_key(data[1])
-                if (key):
-                    otp_response = int(os.urandom(2).encode('hex'), 16)
-                    if (self._active_sessions.add_otp_response_and_key(
-                            session_id,
-                            otp_response, key)):
-                        self.transport.write("%05d" % otp_response)
-                    else:
-                        self.transport.write("Error")
+        if data[0] == "get" and len(data) == 3:
+            # data is of form add]id]auth
+            if self._share_manager.authenticate(data[1], data[2]):
+                share = self._share_manager.get_share(data[1])
+                if (share):
+                    # key is in db
+                    self.transport.write(share.get_server_share())
                 else:
-                    self.transport.write("Too many requests. Try again later.")
+                    # key not in db
+                    self.transport.write("Revoked/Non-existent key")
+            else:
+                self.transport.write("Rejected")
+
+        elif data[0] == "add" and len(data) == 3:
+            # add key to db
+            # data is of form add]id]server_share
+            auth_key = self._share_manager.add_share(data[1], data[2])
+            self.transport.write(auth_key)
+
+        elif data[0] == "request" and len(data) == 4 and data[3].isdigit():
+            session_id = int(data[3])
+            # data is of the form request]id]auth]otp_challenge
+            if self._active_sessions.is_session_valid(session_id):
+                if self._share_manager.authenticate(data[1], data[2]):
+                    keys = self._share_manager.create_revocation_keys(data[1])
+                    if (keys):
+                        otp_response = int(os.urandom(2).encode('hex'), 16)
+                        if (self._active_sessions.add_otp_response_and_keys(
+                                session_id,
+                                otp_response,
+                                keys)):
+                            self.transport.write("%05d" % otp_response)
+                        else:
+                            self.transport.write("Error")
+                    else:
+                        self.transport.write(
+                            "Key has already been given out.")
+                else:
+                    # An invalid authentication code!
+                    self.transport.write("Rejected")
             else:
                 self.transport.write("Invalid/Expired OTP challenge.")
         else:

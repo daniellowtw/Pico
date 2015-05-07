@@ -6,11 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Pico remote disabling</title>
-
     <!-- Bootstrap -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/signin.css" rel="stylesheet">
-
     <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -20,29 +18,31 @@
 </head>
 
 <body>
-
     <div class="container">
-
         <form role="form" class="form-signin" onsubmit="return false">
             <h2 class="form-signin-heading">Pico Remote disabling</h2>
-            <label for="revKey" class="sr-only">revocation key</label>
-            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="Revocation key" required>
+            <label for="revKey" class="sr-only">To disable your Pico, enter your disabling key here</label>
+            <input type="text" autocomplete="off" id="revKey" class="form-control" placeholder="To disable your Pico, enter your disabling key here" required>
             <button type="submit" class="btn btn-lg btn-primary btn-block" id="disableBtn" onclick="sendReq()">Disable</button>
         </form>
+
         <!-- <div class="row"> -->
-            <div class="col-sm-4 center">
-                <div class="well well-lg" style="display:none" id="result">
-                    
-                </div>
+        <div class="col-sm-4 center">
+            <div class="well well-lg" style="display:none" id="result">
             </div>
+        </div>
+        <form role="form" action="../reenable" method="post" class="form-signin">
+            <h2 class="form-signin-heading">Pico re-enabling</h2>
+            <label for="enabling-key" class="sr-only">To re-enable your Pico, enter your Re-enabling key here</label>
+            <input type="text" autocomplete="off" name="enabling-key" class="form-control" placeholder="To re-enable your Pico, enter your Re-enabling key here" required>
+            <button type="submit" class="btn btn-lg btn-primary btn-block">Enable</button>
+        </form>
         <!-- </div> -->
         <div class="form-signin">
-            
-                <a href="../request" class="btn btn-primary btn-lg btn-block" >Request for revocation key</a>
+            <a href="../request" class="btn btn-primary btn-lg btn-block">Request keys</a>
         </div>
     </div>
     <!-- /container -->
-
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
