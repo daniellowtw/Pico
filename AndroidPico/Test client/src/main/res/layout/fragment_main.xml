@@ -79,7 +79,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Create file"
+                android:text="Pair with server"
                 android:onClick="onCreateFile"
                 android:id="@+id/createFileButton"
                 android:layout_weight="1" />
@@ -87,7 +87,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Request Rev Key"
+                android:text="Request Keys"
                 android:onClick="onRequestRevKey"
                 android:id="@+id/requestRevKeyButton"
                 android:layout_weight="1" />
@@ -101,15 +101,7 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="View file"
-                android:onClick="onShowFile"
-                android:id="@+id/readFileButton"
-                android:layout_weight="1" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Decrypt file"
+                android:text="Decrypt secret"
                 android:onClick="onDecrypt"
                 android:id="@+id/decryptFileButton"
                 android:layout_weight="1" />
@@ -123,13 +115,39 @@
         <!--android:id="@+id/getKeyCountButton"-->
         <!--android:layout_alignParentBottom="true" />-->
 
-        <Button
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:text="Debugging actions"
+            android:id="@+id/textView"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Lock app"
-            android:onClick="onLockOrUnlockApp"
-            android:id="@+id/lockOrUnlockButton"
-            android:layout_alignParentBottom="true" />
+            android:layout_gravity="right">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lock app"
+                android:onClick="onLockOrUnlockApp"
+                android:id="@+id/lockOrUnlockButton"
+                android:layout_alignParentBottom="true"
+                android:layout_weight="1"
+                />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="View file"
+                android:onClick="onShowFile"
+                android:id="@+id/readFileButton"
+                android:layout_weight="1"
+                android:layout_gravity="center_horizontal"
+                />
+        </LinearLayout>
 
         <LinearLayout
             android:orientation="horizontal"
@@ -143,7 +161,8 @@
                 android:text="Start BG service"
                 android:onClick="toggleBGService"
                 android:id="@+id/toggleServiceBtn"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                />
 
             <Button
                 android:layout_width="wrap_content"
@@ -151,7 +170,8 @@
                 android:text="Start polling"
                 android:onClick="onTogglePolling"
                 android:id="@+id/togglePollButton"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                />
 
         </LinearLayout>
 
@@ -176,7 +196,8 @@
                 android:text="Upload DB"
                 android:onClick="uploadDB"
                 android:id="@+id/stopServiceBtn"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                />
 
             <Button
                 android:layout_width="wrap_content"
@@ -184,7 +205,8 @@
                 android:text="Export DB to SDcard"
                 android:onClick="exportDB"
                 android:id="@+id/exportDBBtn"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                />
         </LinearLayout>
 
         <!--<Button-->

@@ -112,6 +112,7 @@ public class ServerAPIIntentService extends IntentService {
         super.onCreate();
         nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         alarmBroadcastReceiver = new AlarmBroadcastReceiver();
         Log.v(TAG, "onCreate called");
     }
@@ -216,13 +217,14 @@ public class ServerAPIIntentService extends IntentService {
      * */
     private void handleCreateServerShare(String uid, String key) throws IOException {
         String messageToSend = "add]" + uid + "]" + key;
-        String result = sendStringToServer(messageToSend);
-        if (result.isEmpty()) {
+        String authCode = sendStringToServer(messageToSend);
+        if (authCode.isEmpty()) {
             Log.i("empty", "empty");
         } else {
+            prefs.edit().putString("authCode", authCode).commit();
             Intent localIntent =
                     new Intent(MainActivity.NOTIFY_USER)
-                            .putExtra(MainActivity.NOTIFY_USER_MESSAGE, result);
+                            .putExtra(MainActivity.NOTIFY_USER_MESSAGE, "Paired!");
             LocalBroadcastManager.getInstance(this).sendBroadcast(localIntent);
         }
     }
@@ -237,7 +239,8 @@ public class ServerAPIIntentService extends IntentService {
      *
      * */
     private void handleRequestRevKey(String uid, String challenge) throws IOException {
-        String messageToSend = "request]" + uid + "]" + challenge;
+        String authCode = prefs.getString("authCode","");
+        String messageToSend = "request]" + uid + "]" + authCode + "]" + challenge;
         String response = sendStringToServer(messageToSend);
         Intent localIntent = new Intent(MainActivity.NOTIFY_USER_ALERT);
         if (!response.isEmpty()) {
@@ -258,7 +261,8 @@ public class ServerAPIIntentService extends IntentService {
      *
      * */
     private void handleUnlockApp(String uid) throws IOException {
-        String messageToSend = "get]" + uid;
+        String authCode = prefs.getString("authCode","");
+        String messageToSend = "get]" +  uid + "]" + authCode;
         String key = sendStringToServer(messageToSend);
         if (key.isEmpty() || key.startsWith("Revoked")) {
 //            showNotification("Error: revoked/missing key", "Key is not found on server", false);
